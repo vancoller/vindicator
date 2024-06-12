@@ -13,6 +13,8 @@ namespace Vindicator.Service.Services
         List<RecoveryPosition> Positions { get; }
         bool AddPosition(Position position, string botLabel);
         void OnTick();
+        void OnOneMinBarClosed();
         void Configure(string symbol, TradeType tradeType);
+        RecoveryTraderResults GetResults();
     }
 }

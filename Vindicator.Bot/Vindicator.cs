@@ -1,10 +1,9 @@
-using Microsoft.Extensions.DependencyInjection;
 using cAlgo.API;
 using System.Linq;
 using System.Diagnostics;
-using System.Collections.Generic;
 using Vindicator.Service.Services;
 using Vindicator.Service.Models;
+using System;
 
 namespace cAlgo.Robots
 {
@@ -18,11 +17,17 @@ namespace cAlgo.Robots
         [Parameter("Max spread allowed to open position", Group = "Settings", DefaultValue = 5.0)]
         public double MaxSpread { get; set; } = 5.0;
 
+
+
         [Parameter("Recovery Pips Grid", DefaultValue = "100", Group = "Recovery")]
         public int PipsBetweenTrades { get; set; }
 
-        [Parameter("Recovery TP Pips", DefaultValue = 10, Group = "Recovery")]
-        public int TakeProfitPips { get; set; }
+        [Parameter("Recovery TP Money per 1k volume", DefaultValue = 1, Group = "Recovery")]
+        public int TakeProfitMoneyPer1kVolume { get; set; }
+
+        [Parameter("Increase volume every x trade", DefaultValue = 10, Group = "Recovery")]
+        public int IncreaseVolumeEveryXTrade { get; set; }
+
 
         /// <summary>
         /// VOLUME
@@ -43,10 +48,14 @@ namespace cAlgo.Robots
         [Parameter("Test", Group = "Debug", DefaultValue = false)]
         public bool IsTesting { get; set; }
 
+        [Parameter("Testing Seed", Group = "Debug", DefaultValue = 1)]
+        public int TestingSeed { get; set; }
+
         [Parameter("Debug", Group = "Debug", DefaultValue = false)]
         public bool IsDebug { get; set; }
 
         private IVindicatorService vindicatorService;
+        private Random random;
 
         protected override void OnStart()
         {
@@ -57,12 +66,18 @@ namespace cAlgo.Robots
             {
                 MaxSpread = MaxSpread,
                 PipsBetweenTrades = PipsBetweenTrades,
-                TakeProfitPips = TakeProfitPips,
-                UseVolumePerOneK = UseVolumePerOneK,
-                PerOneKVolume = PerOneKVolume,
+                TakeProfitMoney = TakeProfitMoneyPer1kVolume,
+                UseVolumePerOneK = UseVolumePerOneK,PerOneKVolume = PerOneKVolume,
                 PerOneKEquity = PerOneKEquity,
-                MaxFirstVolume = MaxFirstVolume
+                MaxFirstVolume = MaxFirstVolume,
+                BotLabel = BotLabel,
+                IncreaseVolumeEveryXTrade = IncreaseVolumeEveryXTrade
             });
+
+            if (IsTesting)
+            {
+                random = new Random(TestingSeed);
+            }
         }
 
         protected override void OnBar()
@@ -76,6 +91,13 @@ namespace cAlgo.Robots
             var recoveryPositionIds = vindicatorService.GetPositionsInRecovery(BotLabel, Symbol.Name);
             var positions = Positions.Where(x => !recoveryPositionIds.Contains(x.Id));
 
+            //Close trades
+            foreach (var pos in positions)
+            {
+                if (pos.NetProfit > 0)
+                    pos.Close();
+            }
+
             //Recover trades
             var posRecover = positions.Where(x => x.Pips < -50);
             if (posRecover.Any())
@@ -87,14 +109,27 @@ namespace cAlgo.Robots
             }
 
             //Enter new trades
-            if (!positions.Any(x => x.TradeType == TradeType.Buy))
+            if (!Positions.Any(x => x.TradeType == TradeType.Buy) && random.Next(1, 4) == 1)
             {
-                ExecuteMarketOrder(TradeType.Buy, Symbol.Name, 1000, "Buy", null, 10);
+                ExecuteMarketOrder(TradeType.Buy, Symbol.Name, 1000, "Random Bot", null, null);
             }
-            else if (!positions.Any(x => x.TradeType == TradeType.Sell))
+            else if (!Positions.Any(x => x.TradeType == TradeType.Sell) && random.Next(1, 4) == 1)
             {
                 ExecuteMarketOrder(TradeType.Sell, Symbol.Name, 1000, "Sell", null, 10);
             }
+        }
+
+        protected override void OnStop()
+        {
+            if (IsBacktesting)
+            {
+                foreach(var pos in Positions)
+                {
+                    pos.Close();
+                }
+            }
+
+            vindicatorService.Stop();
         }
     }
 }

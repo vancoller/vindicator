@@ -1,12 +1,9 @@
 ﻿using cAlgo.API;
+using cAlgo.API.Indicators;
 using cAlgo.API.Internals;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using System.Security.Principal;
-using System.Text;
-using System.Threading.Tasks;
 using Vindicator.Service.Models;
 
 namespace Vindicator.Service.Services
@@ -14,15 +11,25 @@ namespace Vindicator.Service.Services
     public class RecoveryTrader : IRecoveryTrader
     {
         public List<RecoveryPosition> Positions { get; }
+        public IEnumerable<RecoveryPosition> PositionsOpenedHere
+        {
+            get
+            {
+                return Positions.Where(x => x.BotLabel == config.BotLabel);
+            }
+        }
+
         public List<PendingTrade> PendingTrades { get; set; }
+        private Symbol Symbol { get; set; }
 
         private string symbol;
         private TradeType tradeType;
-        private Symbol Symbol { get; set; }
-
+        private RecoveryTraderResults results;
 
         private readonly VindicatorSettings config;
         private readonly Robot robot;
+
+        private RelativeStrengthIndex rsiTrend;
 
         public RecoveryTrader(VindicatorSettings _config, Robot _robot)
         {
@@ -30,6 +37,13 @@ namespace Vindicator.Service.Services
             robot = _robot;
             Positions = new List<RecoveryPosition>();
             PendingTrades = new List<PendingTrade>();
+            results = new RecoveryTraderResults();
+            rsiTrend = robot.Indicators.RelativeStrengthIndex(robot.Bars.ClosePrices, 50);
+        }
+
+        public void OnOneMinBarClosed()
+        {
+            ProcessRecovery();
         }
 
         public void Configure(string _symbol, TradeType _tradeType)
@@ -39,8 +53,19 @@ namespace Vindicator.Service.Services
             Symbol = robot.Symbols.GetSymbol(symbol);
         }
 
+        public RecoveryTraderResults GetResults()
+        {
+            return results;
+        }
+
         public bool AddPosition(Position position, string botLabel)
         {
+            //First entry
+            if (!Positions.Any())
+            {
+                results.StartDate = robot.Time;
+            }
+
             AddRecoveryPosition(position, botLabel);
             return true;
         }
@@ -50,29 +75,68 @@ namespace Vindicator.Service.Services
             if (!Positions.Any())
                 return;
 
+            UpdateStats();
+
+            //CheckTakeProfit();
+            CheckIfTradesAreClosed();
+
             if (PendingTrades.Any())
-            {
                 CheckPendingTrades();
-            }
-            else
-            {
-                ProcessRecovery();
-            }
+            //else
+                //ProcessRecovery();
         }
+
+        private void CheckIfTradesAreClosed()
+        {
+            var tradesToRemove = new List<RecoveryPosition>();
+            foreach (var position in Positions)
+            {
+                if (robot.Positions.FirstOrDefault(x => x.Id == position.Position.Id) == null)
+                {
+                    tradesToRemove.Add(position);
+                }
+            }
+
+            foreach (var trade in tradesToRemove)
+            {
+                Positions.Remove(trade);
+            }
+
+            //End
+            results.EndDate = robot.Time;
+        }
+
+        //private void CheckTakeProfit()
+        //{
+        //    if (tradeType == TradeType.Buy)
+        //    {
+        //        if (Symbol.Bid >= takeProfitPrice)
+        //        {
+        //            CloseAllPositions();
+        //        }
+        //    }
+        //    else
+        //    {
+        //        if (Symbol.Ask <= takeProfitPrice)
+        //        {
+        //            CloseAllPositions();
+        //        }
+        //    }
+        //}
 
         private void UpdateTakeProfit()
         {
             var takeProfitPrice = CalculateBreakEvenPrice(tradeType);
 
-            if (tradeType == TradeType.Buy)
-                takeProfitPrice += (config.TakeProfitPips * Symbol.PipSize);
-            else
-                takeProfitPrice -= (config.TakeProfitPips * Symbol.PipSize);
-
-            foreach (var position in Positions)
+            foreach (var position in Positions.OrderBy(x => x.Position.EntryPrice))
             {
                 robot.ModifyPosition(position.Position, null, takeProfitPrice);
             }
+
+            //if (tradeType == TradeType.Buy)
+            //    takeProfitPrice += (config.TakeProfitPips * Symbol.PipSize);
+            //else
+            //    takeProfitPrice -= (config.TakeProfitPips * Symbol.PipSize);
         }
 
         private double CalculateBreakEvenPrice(TradeType tradeType)
@@ -88,6 +152,9 @@ namespace Vindicator.Service.Services
                 fees += Math.Abs(position.Position.Commissions * 2) + Math.Abs(position.Position.Swap);
             }
 
+            //Add $$ to make profit
+            fees += config.TakeProfitMoney * (totalVolume / 1000);
+
             var withoutFees = totalVolumePrice / totalVolume;
             var valuePerPip = Symbol.PipValue * totalVolume;
             var pipsRequiredToCoverFees = fees / valuePerPip;
@@ -97,6 +164,17 @@ namespace Vindicator.Service.Services
 
         private void ProcessRecovery()
         {
+            if (!Positions.Any())
+                return;
+
+            //Filters -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+            //if (rsiTrend.Result.LastValue < 50 && tradeType == TradeType.Buy)
+            //    return;
+
+            //if (rsiTrend.Result.LastValue > 50 && tradeType == TradeType.Sell)
+            //    return;
+            // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+
             double pipsBetweenTrades = 0;
             if (tradeType == TradeType.Buy)
             {
@@ -113,8 +191,15 @@ namespace Vindicator.Service.Services
 
             if (pipsBetweenTrades < -config.PipsBetweenTrades)
             {
-                AddPendingTrade(new PendingTrade(Symbol.Name, CalculateEntryVolume(), tradeType, config.BotLabel, null, null, null, null, "calculated_recovery"));
+                var volume = CalculateEntryVolume();
+                volume = AdjustVolume(volume);
+                AddPendingTrade(new PendingTrade(Symbol.Name, volume, tradeType, config.BotLabel, null, null, null, null, "calculated_recovery"));
             }
+        }
+
+        private double AdjustVolume(double volume)
+        {
+            return volume * (PositionsOpenedHere.Count() / config.IncreaseVolumeEveryXTrade + 1);
         }
 
         private void AddPendingTrade(PendingTrade trade)
@@ -133,18 +218,11 @@ namespace Vindicator.Service.Services
             var tradeToRemove = new List<PendingTrade>();
             foreach (var trade in PendingTrades)
             {
-
                 var result = robot.ExecuteMarketOrder(trade.TradeType, trade.Symbol, trade.Volume, trade.Label, trade.StopLoss, tpPips, trade.Comment);
                 if (result.IsSuccessful)
                 {
                     tradeToRemove.Add(trade);
                     hasNewTrades = true;
-
-                    //Modify TP if was a price
-                    if (trade.TakeProfitPrice.HasValue)
-                    {
-                        robot.ModifyPosition(result.Position, null, trade.TakeProfitPrice);
-                    }
 
                     AddRecoveryPosition(result.Position, trade.Label);
                 }
@@ -159,6 +237,9 @@ namespace Vindicator.Service.Services
 
         private void AddRecoveryPosition(Position position, string label)
         {
+            //Update position
+            robot.ModifyPosition(position, 0, 0);
+
             //Add to recovery trade
             Positions.Add(new RecoveryPosition
             {
@@ -192,6 +273,30 @@ namespace Vindicator.Service.Services
             volume = Symbol.NormalizeVolumeInUnits(volume);
 
             return volume;
+        }
+
+        private void CloseAllPositions()
+        {
+            foreach (var position in Positions)
+            {
+                robot.ClosePosition(position.Position);
+            }
+
+            CheckIfTradesAreClosed();
+        }
+
+        private void UpdateStats()
+        {
+            var equityDrawdown = Positions.Sum(x => x.Position.NetProfit);
+            if (equityDrawdown > 0)
+            {
+                var drawdownPercentage = equityDrawdown / robot.Account.Balance * 100;
+                if (drawdownPercentage > results.MaxDrawdownPercentage)
+                {
+                    results.MaxDrawdownPercentage = drawdownPercentage;
+                    results.MaxDrawdownValue = equityDrawdown;
+                }
+            }
         }
     }
 }
