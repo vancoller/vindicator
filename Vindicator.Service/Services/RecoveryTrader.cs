@@ -159,7 +159,10 @@ namespace Vindicator.Service.Services
             var valuePerPip = Symbol.PipValue * totalVolume;
             var pipsRequiredToCoverFees = fees / valuePerPip;
 
-            return withoutFees + (pipsRequiredToCoverFees * Symbol.PipSize);
+            if (tradeType == TradeType.Buy)
+                return withoutFees + (pipsRequiredToCoverFees * Symbol.PipSize);
+            else
+                return withoutFees - (pipsRequiredToCoverFees * Symbol.PipSize);
         }
 
         private void ProcessRecovery()

@@ -109,11 +109,12 @@ namespace cAlgo.Robots
             }
 
             //Enter new trades
-            if (!Positions.Any(x => x.TradeType == TradeType.Buy) && random.Next(1, 4) == 1)
-            {
-                ExecuteMarketOrder(TradeType.Buy, Symbol.Name, 1000, "Random Bot", null, null);
-            }
-            else if (!Positions.Any(x => x.TradeType == TradeType.Sell) && random.Next(1, 4) == 1)
+            //if (!Positions.Any(x => x.TradeType == TradeType.Buy) && random.Next(1, 4) == 1)
+            //{
+            //    ExecuteMarketOrder(TradeType.Buy, Symbol.Name, 1000, "Random Bot", null, null);
+            //}
+            
+            if (!Positions.Any(x => x.TradeType == TradeType.Sell) && random.Next(1, 4) == 1)
             {
                 ExecuteMarketOrder(TradeType.Sell, Symbol.Name, 1000, "Sell", null, 10);
             }
