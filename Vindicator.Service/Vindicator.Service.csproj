@@ -1,0 +1,13 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <AlgoBuild>False</AlgoBuild>
+
+  </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="cTrader.Automate" Version="1.*" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
+    </ItemGroup>
+    
+</Project>
