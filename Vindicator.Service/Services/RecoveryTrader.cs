@@ -291,9 +291,9 @@ namespace Vindicator.Service.Services
         private void UpdateStats()
         {
             var equityDrawdown = Positions.Sum(x => x.Position.NetProfit);
-            if (equityDrawdown > 0)
+            if (equityDrawdown < 0)
             {
-                var drawdownPercentage = equityDrawdown / robot.Account.Balance * 100;
+                var drawdownPercentage = Math.Abs(equityDrawdown / robot.Account.Balance) * 100;
                 if (drawdownPercentage > results.MaxDrawdownPercentage)
                 {
                     results.MaxDrawdownPercentage = drawdownPercentage;

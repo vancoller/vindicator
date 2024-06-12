@@ -80,9 +80,7 @@ namespace Vindicator.Service.Services
         {
             FindInactiveTraders();
 
-            _.Print("----------------------------------------------------------------------------------------------------------------------------");
             _.Print("--------------------------------------------------- RECOVERY STATISTICS ----------------------------------------------------");
-            _.Print("----------------------------------------------------------------------------------------------------------------------------");
             int numberOfRecoveries = results.Count;
             _.Print($"Number of recoveries  |  {numberOfRecoveries}");
 
@@ -98,11 +96,11 @@ namespace Vindicator.Service.Services
 
             //for int, start from 10 and increment by 10 to 100
             for (int i = 0; i < 100; i += 10)
-            {
-                var percentageStart = i / 100.0;
-                var percentageEnd = (i + 10) / 100.0;
+            { 
+                var percentageStart = i;
+                var percentageEnd = (i + 10);
                 var recoveries = results.Count(x => x.MaxDrawdownPercentage >= percentageStart && x.MaxDrawdownPercentage < percentageEnd);
-                _.Print($"Drawdown between {percentageStart.ToString("0.0%")} and {percentageEnd.ToString("0.0%")}  |  {recoveries}");
+                _.Print($"Drawdown between {percentageStart}% and {percentageEnd}%  |  {recoveries}");
             }
             _.Print("----------------------------------------------------------------------------------------------------------------------------");
 

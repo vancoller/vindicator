@@ -10,6 +10,8 @@ namespace cAlgo.Robots
     [Robot(TimeZone = TimeZones.UTC, AccessRights = AccessRights.FullAccess)]
     public class Vindicator : Robot
     {
+        #region Parameters
+
         //BotLabel
         [Parameter("Bot Label", Group = "Settings", DefaultValue = "Vindicator")]
         public string BotLabel { get; set; }
@@ -17,7 +19,8 @@ namespace cAlgo.Robots
         [Parameter("Max spread allowed to open position", Group = "Settings", DefaultValue = 5.0)]
         public double MaxSpread { get; set; } = 5.0;
 
-
+        [Parameter("Recovery Start Pips", DefaultValue = 50, Group = "Recovery")]
+        public int RecoveryStartPips { get; set; }
 
         [Parameter("Recovery Pips Grid", DefaultValue = "100", Group = "Recovery")]
         public int PipsBetweenTrades { get; set; }
@@ -54,8 +57,12 @@ namespace cAlgo.Robots
         [Parameter("Debug", Group = "Debug", DefaultValue = false)]
         public bool IsDebug { get; set; }
 
+        #endregion
+
         private IVindicatorService vindicatorService;
         private Random random;
+        private int algoWin;
+        private int algoTrade;
 
         protected override void OnStart()
         {
@@ -67,7 +74,8 @@ namespace cAlgo.Robots
                 MaxSpread = MaxSpread,
                 PipsBetweenTrades = PipsBetweenTrades,
                 TakeProfitMoney = TakeProfitMoneyPer1kVolume,
-                UseVolumePerOneK = UseVolumePerOneK,PerOneKVolume = PerOneKVolume,
+                UseVolumePerOneK = UseVolumePerOneK,
+                PerOneKVolume = PerOneKVolume,
                 PerOneKEquity = PerOneKEquity,
                 MaxFirstVolume = MaxFirstVolume,
                 BotLabel = BotLabel,
@@ -77,6 +85,18 @@ namespace cAlgo.Robots
             if (IsTesting)
             {
                 random = new Random(TestingSeed);
+            }
+
+
+            Positions.Closed += OnPositionClosed;
+        }
+
+        private void OnPositionClosed(PositionClosedEventArgs args)
+        {
+            var recoveryPositionIds = vindicatorService.GetPositionsInRecovery(BotLabel, Symbol.Name);
+            if (!recoveryPositionIds.Contains(args.Position.Id))
+            {
+                algoWin++;
             }
         }
 
@@ -99,7 +119,7 @@ namespace cAlgo.Robots
             }
 
             //Recover trades
-            var posRecover = positions.Where(x => x.Pips < -50);
+            var posRecover = positions.Where(x => x.Pips < -RecoveryStartPips);
             if (posRecover.Any())
             {
                 foreach (var pos in posRecover)
@@ -109,14 +129,16 @@ namespace cAlgo.Robots
             }
 
             //Enter new trades
-            //if (!Positions.Any(x => x.TradeType == TradeType.Buy) && random.Next(1, 4) == 1)
-            //{
-            //    ExecuteMarketOrder(TradeType.Buy, Symbol.Name, 1000, "Random Bot", null, null);
-            //}
-            
+            if (!Positions.Any(x => x.TradeType == TradeType.Buy) && random.Next(1, 4) == 1)
+            {
+                ExecuteMarketOrder(TradeType.Buy, Symbol.Name, 1000, "Random Bot", null, null);
+                algoTrade++;
+            }
+
             if (!Positions.Any(x => x.TradeType == TradeType.Sell) && random.Next(1, 4) == 1)
             {
                 ExecuteMarketOrder(TradeType.Sell, Symbol.Name, 1000, "Sell", null, 10);
+                algoTrade++;
             }
         }
 
@@ -124,11 +146,14 @@ namespace cAlgo.Robots
         {
             if (IsBacktesting)
             {
-                foreach(var pos in Positions)
+                foreach (var pos in Positions)
                 {
                     pos.Close();
                 }
             }
+
+            Print("-------------------------------------------------- ALGO STATS ----------------------------------------------------------");
+            Print($"Win percentage  |  {((double)algoWin / (double)algoTrade).ToString("P")}");
 
             vindicatorService.Stop();
         }
