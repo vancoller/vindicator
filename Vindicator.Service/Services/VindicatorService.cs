@@ -36,7 +36,7 @@ namespace Vindicator.Service.Services
             // Setup DI container
             var serviceCollection = new ServiceCollection();
             ConfigureServices(serviceCollection);
-            serviceProvider = serviceCollection.BuildServiceProvider();            
+            serviceProvider = serviceCollection.BuildServiceProvider();
         }
 
         private void ConfigureServices(IServiceCollection services)
@@ -96,14 +96,24 @@ namespace Vindicator.Service.Services
 
             //for int, start from 10 and increment by 10 to 100
             for (int i = 0; i < 100; i += 10)
-            { 
+            {
                 var percentageStart = i;
                 var percentageEnd = (i + 10);
                 var recoveries = results.Count(x => x.MaxDrawdownPercentage >= percentageStart && x.MaxDrawdownPercentage < percentageEnd);
                 _.Print($"Drawdown between {percentageStart}% and {percentageEnd}%  |  {recoveries}");
             }
             _.Print("----------------------------------------------------------------------------------------------------------------------------");
+        }
 
+        public double GetFitness(GetFitnessArgs args)
+        {
+            var averageRecoveryDays = results.Select(x => x.TotalDays).Average();
+            var maxDays = results.Select(x => x.TotalDays).Max();
+
+            //if (maxDays > 200)
+                //return 0;
+
+            return 1000 - averageRecoveryDays;
         }
 
         public bool RecoverTrade(Position position, string botLabel)
@@ -125,9 +135,9 @@ namespace Vindicator.Service.Services
             return traders[(symbol, tradeType)];
         }
 
-        public IEnumerable<int> GetPositionsInRecovery(string botlabel, string symbol)
+        public IEnumerable<int> GetPositionsInRecovery(string symbol)
         {
-            return traders.SelectMany(x => x.Value.Positions).Where(x => x.BotLabel == botlabel && x.Position.Symbol.Name == symbol).Select(x => x.Position.Id);
+            return traders.SelectMany(x => x.Value.Positions).Where(x =>x.Position.Symbol.Name == symbol).Select(x => x.Position.Id);
         }
     }
 }

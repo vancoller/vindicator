@@ -21,7 +21,6 @@ namespace Vindicator.Service.Services
 
         public List<PendingTrade> PendingTrades { get; set; }
         private Symbol Symbol { get; set; }
-
         private string symbol;
         private TradeType tradeType;
         private RecoveryTraderResults results;
@@ -29,7 +28,7 @@ namespace Vindicator.Service.Services
         private readonly VindicatorSettings config;
         private readonly Robot robot;
 
-        private RelativeStrengthIndex rsiTrend;
+        private ExponentialMovingAverage emaTrend;
 
         public RecoveryTrader(VindicatorSettings _config, Robot _robot)
         {
@@ -38,12 +37,13 @@ namespace Vindicator.Service.Services
             Positions = new List<RecoveryPosition>();
             PendingTrades = new List<PendingTrade>();
             results = new RecoveryTraderResults();
-            rsiTrend = robot.Indicators.RelativeStrengthIndex(robot.Bars.ClosePrices, 50);
+            emaTrend = robot.Indicators.ExponentialMovingAverage(robot.Bars.ClosePrices, 50);
         }
 
         public void OnOneMinBarClosed()
         {
-            ProcessRecovery();
+            if (!PendingTrades.Any())
+                ProcessRecovery();
         }
 
         public void Configure(string _symbol, TradeType _tradeType)
@@ -67,6 +67,7 @@ namespace Vindicator.Service.Services
             }
 
             AddRecoveryPosition(position, botLabel);
+            CreateNewRecoveryTrade();
             return true;
         }
 
@@ -167,18 +168,19 @@ namespace Vindicator.Service.Services
 
         private void ProcessRecovery()
         {
-            if (!Positions.Any())
+            if (!Positions.Any() || PendingTrades.Any())
                 return;
 
             //Filters -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
-            //if (rsiTrend.Result.LastValue < 50 && tradeType == TradeType.Buy)
-            //    return;
+            if (emaTrend.Result.LastValue > Symbol.Bid && tradeType == TradeType.Buy)
+                return;
 
-            //if (rsiTrend.Result.LastValue > 50 && tradeType == TradeType.Sell)
-            //    return;
-            // -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+            if (emaTrend.Result.LastValue < Symbol.Ask && tradeType == TradeType.Sell)
+                return;
 
-            double pipsBetweenTrades = 0;
+            //--------------------------------------------
+
+           double pipsBetweenTrades = 0;
             if (tradeType == TradeType.Buy)
             {
                 var lastPrice = Positions.Min(x => x.Position.EntryPrice);
@@ -194,10 +196,15 @@ namespace Vindicator.Service.Services
 
             if (pipsBetweenTrades < -config.PipsBetweenTrades)
             {
-                var volume = CalculateEntryVolume();
-                volume = AdjustVolume(volume);
-                AddPendingTrade(new PendingTrade(Symbol.Name, volume, tradeType, config.BotLabel, null, null, null, null, "calculated_recovery"));
+                CreateNewRecoveryTrade();
             }
+        }
+
+        private void CreateNewRecoveryTrade()
+        {
+            var volume = CalculateEntryVolume();
+            volume = AdjustVolume(volume);
+            AddPendingTrade(new PendingTrade(Symbol.Name, volume, tradeType, config.BotLabel, null, null, null, null, "calculated_recovery"));
         }
 
         private double AdjustVolume(double volume)

@@ -13,14 +13,12 @@ namespace cAlgo.Robots
         #region Parameters
 
         //BotLabel
-        [Parameter("Bot Label", Group = "Settings", DefaultValue = "Vindicator")]
-        public string BotLabel { get; set; }
+        [Parameter("Recovery Bot Label", Group = "Settings", DefaultValue = "Vindicator")]
+        public string RecoveryBotLabel { get; set; }
 
         [Parameter("Max spread allowed to open position", Group = "Settings", DefaultValue = 5.0)]
         public double MaxSpread { get; set; } = 5.0;
 
-        [Parameter("Recovery Start Pips", DefaultValue = 50, Group = "Recovery")]
-        public int RecoveryStartPips { get; set; }
 
         [Parameter("Recovery Pips Grid", DefaultValue = "100", Group = "Recovery")]
         public int PipsBetweenTrades { get; set; }
@@ -51,8 +49,19 @@ namespace cAlgo.Robots
         [Parameter("Test", Group = "Debug", DefaultValue = false)]
         public bool IsTesting { get; set; }
 
+        [Parameter("Test Bot Label", Group = "Test", DefaultValue = "Test Bot")]
+        public string TestBotLabel { get; set; }
+
+        [Parameter("Test Recovery Start Pips", DefaultValue = 50, Group = "Debug")]
+        public int RecoveryStartPips { get; set; }
+
         [Parameter("Testing Seed", Group = "Debug", DefaultValue = 1)]
         public int TestingSeed { get; set; }
+
+        [Parameter("Testing Symbols", Group = "Debug", DefaultValue =
+            "AUDCAD,AUDCHF,AUDNZD,AUDUSD,CADCHF,EURAUD,EURCAD,EURCHF,EURGBP,EURNZD,EURUSD,GBPAUD,GBPCAD,GBPCHF,GBPNZD,GBPUSD,NZDCAD,NZDCHF,NZDJPY,NZDUSD,USDCAD,USDCHF")]
+            //"AUDCAD,AUDCHF,AUDJPY,AUDNZD,AUDUSD,CADCHF,CADJPY,CHFJPY,EURAUD,EURCAD,EURCHF,EURGBP,EURJPY,EURNZD,EURUSD,GBPAUD,GBPCAD,GBPCHF,GBPJPY,GBPNZD,GBPUSD,NZDCAD,NZDCHF,NZDJPY,NZDUSD,USDCAD,USDCHF,USDJPY")]
+        public string TestingSymbols { get; set; }
 
         [Parameter("Debug", Group = "Debug", DefaultValue = false)]
         public bool IsDebug { get; set; }
@@ -63,6 +72,7 @@ namespace cAlgo.Robots
         private Random random;
         private int algoWin;
         private int algoTrade;
+        private string allCurrencies = "AUDCAD,AUDCHF,AUDJPY,AUDNZD,AUDUSD,CADCHF,CADJPY,CHFJPY,EURAUD,EURCAD,EURCHF,EURGBP,EURJPY,EURNZD,EURUSD,GBPAUD,GBPCAD,GBPCHF,GBPJPY,GBPNZD,GBPUSD,NZDCAD,NZDCHF,NZDJPY,NZDUSD,USDCAD,USDCHF,USDJPY";
 
         protected override void OnStart()
         {
@@ -78,7 +88,7 @@ namespace cAlgo.Robots
                 PerOneKVolume = PerOneKVolume,
                 PerOneKEquity = PerOneKEquity,
                 MaxFirstVolume = MaxFirstVolume,
-                BotLabel = BotLabel,
+                BotLabel = RecoveryBotLabel,
                 IncreaseVolumeEveryXTrade = IncreaseVolumeEveryXTrade
             });
 
@@ -87,13 +97,12 @@ namespace cAlgo.Robots
                 random = new Random(TestingSeed);
             }
 
-
             Positions.Closed += OnPositionClosed;
         }
 
         private void OnPositionClosed(PositionClosedEventArgs args)
         {
-            var recoveryPositionIds = vindicatorService.GetPositionsInRecovery(BotLabel, Symbol.Name);
+            var recoveryPositionIds = vindicatorService.GetPositionsInRecovery(args.Position.Symbol.Name);
             if (!recoveryPositionIds.Contains(args.Position.Id))
             {
                 algoWin++;
@@ -108,37 +117,45 @@ namespace cAlgo.Robots
 
         private void TestOnBar()
         {
-            var recoveryPositionIds = vindicatorService.GetPositionsInRecovery(BotLabel, Symbol.Name);
-            var positions = Positions.Where(x => !recoveryPositionIds.Contains(x.Id));
+            if (string.IsNullOrEmpty(TestingSymbols))
+                allCurrencies = Symbol.Name;
+            else
+                allCurrencies = TestingSymbols;
 
-            //Close trades
-            foreach (var pos in positions)
+            foreach (var symbol in allCurrencies.Split(','))
             {
-                if (pos.NetProfit > 0)
-                    pos.Close();
-            }
+                var recoveryPositionIds = vindicatorService.GetPositionsInRecovery(symbol);
+                var symbolPositions = Positions.Where(x => x.Symbol.Name == symbol && !recoveryPositionIds.Contains(x.Id));
 
-            //Recover trades
-            var posRecover = positions.Where(x => x.Pips < -RecoveryStartPips);
-            if (posRecover.Any())
-            {
-                foreach (var pos in posRecover)
+                //Close trades
+                foreach (var pos in symbolPositions)
                 {
-                    vindicatorService.RecoverTrade(pos, BotLabel);
+                    if (pos.NetProfit > 0)
+                        pos.Close();
                 }
-            }
 
-            //Enter new trades
-            if (!Positions.Any(x => x.TradeType == TradeType.Buy) && random.Next(1, 4) == 1)
-            {
-                ExecuteMarketOrder(TradeType.Buy, Symbol.Name, 1000, "Random Bot", null, null);
-                algoTrade++;
-            }
+                //Recover trades
+                var posRecover = symbolPositions.Where(x => x.Pips < -RecoveryStartPips);
+                if (posRecover.Any())
+                {
+                    foreach (var pos in posRecover)
+                    {
+                        vindicatorService.RecoverTrade(pos, TestBotLabel);
+                    }
+                }
 
-            if (!Positions.Any(x => x.TradeType == TradeType.Sell) && random.Next(1, 4) == 1)
-            {
-                ExecuteMarketOrder(TradeType.Sell, Symbol.Name, 1000, "Sell", null, 10);
-                algoTrade++;
+                //Enter new trades
+                if (!symbolPositions.Any(x => x.TradeType == TradeType.Buy) && random.Next(1, 4) == 1)
+                {
+                    ExecuteMarketOrder(TradeType.Buy, symbol, CalculateEntryVolume(), TestBotLabel, null, null);
+                    algoTrade++;
+                }
+
+                if (!symbolPositions.Any(x => x.TradeType == TradeType.Sell) && random.Next(1, 4) == 1)
+                {
+                    ExecuteMarketOrder(TradeType.Sell, symbol, CalculateEntryVolume(), TestBotLabel, null, 10);
+                    algoTrade++;
+                }
             }
         }
 
@@ -157,5 +174,26 @@ namespace cAlgo.Robots
 
             vindicatorService.Stop();
         }
+
+        protected double CalculateEntryVolume()
+        {
+            if (!UseVolumePerOneK)
+                return PerOneKVolume;
+
+            //Using VolumePerOneK to calculate the volume, get the account balance and do the math
+            var accountBalance = Account.Balance;
+            var volume = (accountBalance * PerOneKVolume) / PerOneKEquity;
+            volume = Math.Min(volume, MaxFirstVolume);
+            volume = Symbol.NormalizeVolumeInUnits(volume);
+
+            return volume;
+        }
+
+        protected override double GetFitness(GetFitnessArgs args)
+        {
+            return vindicatorService.GetFitness(args);
+        }
+
+
     }
 }

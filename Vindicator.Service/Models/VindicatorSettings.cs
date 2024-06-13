@@ -3,7 +3,7 @@ namespace Vindicator.Service.Models
 {
     public class VindicatorSettings
     {
-        public int TakeProfitMoney { get; set; }
+        public double TakeProfitMoney { get; set; }
         public int PipsBetweenTrades { get; set; }
         public string BotLabel { get; set; }
         public double MaxSpread { get; set; }
