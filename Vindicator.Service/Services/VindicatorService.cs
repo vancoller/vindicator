@@ -76,35 +76,6 @@ namespace Vindicator.Service.Services
             }
         }
 
-        public void Stop()
-        {
-            FindInactiveTraders();
-
-            _.Print("--------------------------------------------------- RECOVERY STATISTICS ----------------------------------------------------");
-            int numberOfRecoveries = results.Count;
-            _.Print($"Number of recoveries  |  {numberOfRecoveries}");
-
-            var averageRecoveryDays = results.Select(x => x.TotalDays).Average();
-            var averageRecoveryHours = averageRecoveryDays * 24;
-
-            var maxDays = results.Select(x => x.TotalDays).Max();
-            var maxHours = maxDays * 24;
-
-            _.Print($"Average recovery time  |  {averageRecoveryDays.ToString("0.0")} days OR {averageRecoveryHours.ToString("0.0")} hours");
-            _.Print($"Max recovery time  |  {maxDays.ToString("0.0")} days OR {maxHours.ToString("0.0")} hours");
-            _.Print("----------------------------------------------------------------------------------------------------------------------------");
-
-            //for int, start from 10 and increment by 10 to 100
-            for (int i = 0; i < 100; i += 10)
-            {
-                var percentageStart = i;
-                var percentageEnd = (i + 10);
-                var recoveries = results.Count(x => x.MaxDrawdownPercentage >= percentageStart && x.MaxDrawdownPercentage < percentageEnd);
-                _.Print($"Drawdown between {percentageStart}% and {percentageEnd}%  |  {recoveries}");
-            }
-            _.Print("----------------------------------------------------------------------------------------------------------------------------");
-        }
-
         public double GetFitness(GetFitnessArgs args)
         {
             var averageRecoveryDays = results.Select(x => x.TotalDays).Average();
@@ -138,6 +109,49 @@ namespace Vindicator.Service.Services
         public IEnumerable<int> GetPositionsInRecovery(string symbol)
         {
             return traders.SelectMany(x => x.Value.Positions).Where(x =>x.Position.Symbol.Name == symbol).Select(x => x.Position.Id);
+        }
+
+        public void Stop()
+        {
+            FindInactiveTraders();
+
+            _.Print("--------------------------------------------------- RECOVERY STATISTICS ----------------------------------------------------");
+            int numberOfRecoveries = results.Count;
+            _.Print($"Number of recoveries  |  {numberOfRecoveries}");
+
+            var averageRecoveryDays = results.Select(x => x.TotalDays).Average();
+            var averageRecoveryHours = averageRecoveryDays * 24;
+
+            var maxDays = results.Select(x => x.TotalDays).Max();
+            var maxHours = maxDays * 24;
+
+            _.Print($"Average recovery time  |  {averageRecoveryDays.ToString("0.0")} days OR {averageRecoveryHours.ToString("0.0")} hours");
+            _.Print($"Max recovery time  |  {maxDays.ToString("0.0")} days OR {maxHours.ToString("0.0")} hours");
+            _.Print("----------------------------------------------------------------------------------------------------------------------------");
+
+            //for int, start from 10 and increment by 10 to 100
+            for (int i = 0; i < 100; i += 10)
+            {
+                var percentageStart = i;
+                var percentageEnd = (i + 10);
+                var recoveries = results.Count(x => x.MaxDrawdownPercentage >= percentageStart && x.MaxDrawdownPercentage < percentageEnd);
+                _.Print($"Drawdown between {percentageStart}% and {percentageEnd}%  |  {recoveries}");
+            }
+
+            _.Print("----------------------------------------------------------------------------------------------------------------------------");
+
+            var resultsGroupedBySymbol = results.GroupBy(x => x.Symbol);
+            foreach (var group in resultsGroupedBySymbol)
+            {
+                var symbol = group.Key;
+                var symbolResults = group.ToList();
+
+                var averageDrawdown = symbolResults.Select(x => x.MaxDrawdownPercentage).Average();
+                var maxDrawdown = symbolResults.Select(x => x.MaxDrawdownPercentage).Max();
+
+                _.Print($"Symbol: {symbol}  |  Average Drawdown: {averageDrawdown.ToString("0.0")}%  |  Max Drawdown: {maxDrawdown.ToString("0.0")}%");
+            }
+            _.Print("----------------------------------------------------------------------------------------------------------------------------");
         }
     }
 }

@@ -36,8 +36,14 @@ namespace Vindicator.Service.Services
             robot = _robot;
             Positions = new List<RecoveryPosition>();
             PendingTrades = new List<PendingTrade>();
-            results = new RecoveryTraderResults();
             emaTrend = robot.Indicators.ExponentialMovingAverage(robot.Bars.ClosePrices, 50);
+        }
+        public void Configure(string _symbol, TradeType _tradeType)
+        {
+            symbol = _symbol;
+            tradeType = _tradeType;
+            Symbol = robot.Symbols.GetSymbol(symbol);
+            results = new RecoveryTraderResults(symbol);
         }
 
         public void OnOneMinBarClosed()
@@ -46,12 +52,6 @@ namespace Vindicator.Service.Services
                 ProcessRecovery();
         }
 
-        public void Configure(string _symbol, TradeType _tradeType)
-        {
-            symbol = _symbol;
-            tradeType = _tradeType;
-            Symbol = robot.Symbols.GetSymbol(symbol);
-        }
 
         public RecoveryTraderResults GetResults()
         {

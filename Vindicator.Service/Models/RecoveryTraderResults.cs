@@ -8,6 +8,7 @@ namespace Vindicator.Service.Models
 {
     public class RecoveryTraderResults
     {
+        public string Symbol { get; set; }
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
         public double MaxDrawdownPercentage { get; set; }
@@ -19,6 +20,11 @@ namespace Vindicator.Service.Models
             {
                 return (EndDate - StartDate).TotalDays;
             }
+        }
+
+        public RecoveryTraderResults(string symbol)
+        {
+            Symbol = symbol;
         }
     }
 }
