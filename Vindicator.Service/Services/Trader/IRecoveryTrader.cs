@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Vindicator.Service.Models;
 
-namespace Vindicator.Service.Services
+namespace Vindicator.Service.Services.Trader
 {
     public interface IRecoveryTrader
     {

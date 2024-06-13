@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Vindicator.Service.Models;
 
-namespace Vindicator.Service.Services
+namespace Vindicator.Service.Services.Trader
 {
     public class RecoveryTrader : IRecoveryTrader
     {
@@ -84,7 +84,7 @@ namespace Vindicator.Service.Services
             if (PendingTrades.Any())
                 CheckPendingTrades();
             //else
-                //ProcessRecovery();
+            //ProcessRecovery();
         }
 
         private void CheckIfTradesAreClosed()
@@ -161,9 +161,9 @@ namespace Vindicator.Service.Services
             var pipsRequiredToCoverFees = fees / valuePerPip;
 
             if (tradeType == TradeType.Buy)
-                return withoutFees + (pipsRequiredToCoverFees * Symbol.PipSize);
+                return withoutFees + pipsRequiredToCoverFees * Symbol.PipSize;
             else
-                return withoutFees - (pipsRequiredToCoverFees * Symbol.PipSize);
+                return withoutFees - pipsRequiredToCoverFees * Symbol.PipSize;
         }
 
         private void ProcessRecovery()
@@ -180,7 +180,7 @@ namespace Vindicator.Service.Services
 
             //--------------------------------------------
 
-           double pipsBetweenTrades = 0;
+            double pipsBetweenTrades = 0;
             if (tradeType == TradeType.Buy)
             {
                 var lastPrice = Positions.Min(x => x.Position.EntryPrice);
@@ -278,7 +278,7 @@ namespace Vindicator.Service.Services
 
             //Using VolumePerOneK to calculate the volume, get the account balance and do the math
             var accountBalance = robot.Account.Balance;
-            var volume = (accountBalance * config.PerOneKVolume) / config.PerOneKEquity;
+            var volume = accountBalance * config.PerOneKVolume / config.PerOneKEquity;
             volume = Math.Min(volume, config.MaxFirstVolume);
             volume = Symbol.NormalizeVolumeInUnits(volume);
 

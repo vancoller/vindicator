@@ -46,20 +46,27 @@ namespace cAlgo.Robots
         public double MaxFirstVolume { get; set; }
 
 
-        [Parameter("Test", Group = "Debug", DefaultValue = false)]
+        [Parameter("Using Testing Feature", Group = "Test", DefaultValue = false)]
         public bool IsTesting { get; set; }
 
         [Parameter("Test Bot Label", Group = "Test", DefaultValue = "Test Bot")]
         public string TestBotLabel { get; set; }
 
-        [Parameter("Test Recovery Start Pips", DefaultValue = 50, Group = "Debug")]
+        [Parameter("Long Allowed", Group = "Test", DefaultValue = true)]
+        public bool LongAllowed { get; set; }
+
+        [Parameter("Short Allowed", Group = "Test", DefaultValue = true)]
+        public bool ShortAllowed { get; set; }
+
+        [Parameter("Test Recovery Start Pips", DefaultValue = 50, Group = "Test")]
         public int RecoveryStartPips { get; set; }
 
-        [Parameter("Testing Seed", Group = "Debug", DefaultValue = 1)]
+        [Parameter("Testing Seed", Group = "Test", DefaultValue = 1)]
         public int TestingSeed { get; set; }
 
-        [Parameter("Testing Symbols", Group = "Debug", DefaultValue =
-            "AUDCAD,AUDCHF,AUDNZD,AUDUSD,CADCHF,EURAUD,EURCAD,EURCHF,EURGBP,EURNZD,EURUSD,GBPAUD,GBPCAD,GBPCHF,GBPNZD,GBPUSD,NZDCAD,NZDCHF,NZDJPY,NZDUSD,USDCAD,USDCHF")]
+        [Parameter("Testing Symbols", Group = "Test", DefaultValue =
+            "AUDCAD, AUDNZD,AUDUSD,EURAUD,EURCAD,EURCHF,EURGBP,EURNZD,EURUSD,GBPAUD,GBPCAD,GBPCHF,GBPNZD,GBPUSD,NZDCAD,NZDUSD,USDCAD,USDCHF")]
+            //"AUDCAD,AUDCHF,AUDNZD,AUDUSD,CADCHF,EURAUD,EURCAD,EURCHF,EURGBP,EURNZD,EURUSD,GBPAUD,GBPCAD,GBPCHF,GBPNZD,GBPUSD,NZDCAD,NZDCHF,NZDUSD,USDCAD,USDCHF")]
             //"AUDCAD,AUDCHF,AUDJPY,AUDNZD,AUDUSD,CADCHF,CADJPY,CHFJPY,EURAUD,EURCAD,EURCHF,EURGBP,EURJPY,EURNZD,EURUSD,GBPAUD,GBPCAD,GBPCHF,GBPJPY,GBPNZD,GBPUSD,NZDCAD,NZDCHF,NZDJPY,NZDUSD,USDCAD,USDCHF,USDJPY")]
         public string TestingSymbols { get; set; }
 
@@ -130,6 +137,9 @@ namespace cAlgo.Robots
                 //Close trades
                 foreach (var pos in symbolPositions)
                 {
+                    //Always recover
+                    vindicatorService.RecoverTrade(pos, TestBotLabel);
+
                     if (pos.NetProfit > 0)
                         pos.Close();
                 }
@@ -145,13 +155,13 @@ namespace cAlgo.Robots
                 }
 
                 //Enter new trades
-                if (!symbolPositions.Any(x => x.TradeType == TradeType.Buy) && random.Next(1, 4) == 1)
+                if (!symbolPositions.Any(x => x.TradeType == TradeType.Buy) && LongAllowed && random.Next(1, 4) == 1)
                 {
                     ExecuteMarketOrder(TradeType.Buy, symbol, CalculateEntryVolume(), TestBotLabel, null, null);
                     algoTrade++;
                 }
 
-                if (!symbolPositions.Any(x => x.TradeType == TradeType.Sell) && random.Next(1, 4) == 1)
+                if (!symbolPositions.Any(x => x.TradeType == TradeType.Sell) && ShortAllowed && random.Next(1, 4) == 1)
                 {
                     ExecuteMarketOrder(TradeType.Sell, symbol, CalculateEntryVolume(), TestBotLabel, null, 10);
                     algoTrade++;
@@ -161,13 +171,13 @@ namespace cAlgo.Robots
 
         protected override void OnStop()
         {
-            if (IsBacktesting)
-            {
-                foreach (var pos in Positions)
-                {
-                    pos.Close();
-                }
-            }
+            //if (IsBacktesting)
+            //{
+            //    foreach (var pos in Positions)
+            //    {
+            //        pos.Close();
+            //    }
+            //}
 
             Print("-------------------------------------------------- ALGO STATS ----------------------------------------------------------");
             Print($"Win percentage  |  {((double)algoWin / (double)algoTrade).ToString("P")}");
