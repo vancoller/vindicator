@@ -1,39 +1,48 @@
 ﻿
 using cAlgo.API;
 using System.Collections.Generic;
+using System.Linq;
 using Vindicator.Service.Enums;
 using Vindicator.Service.Models;
-using Vindicator.Service.Services.Trader;
 
 namespace Vindicator.Service.Services.Sender
 {
     public class VindicatorSender : IVindicatorService
     {
-        private readonly Robot robot;
-        private readonly VindicatorSettings settings;
+        private readonly Robot _;
         private LocalStorageScope scope;
+        private List<Position> recoveryTrades = new List<Position>();
 
-        public VindicatorSender(Robot robot, VindicatorSettings settings)
+        public VindicatorSender(Robot robot)
         {
-            this.robot = robot;
-            this.settings = settings;
+            this._ = robot;
         }
 
         public IEnumerable<int> GetPositionsInRecovery(string symbol)
         {
-            throw new System.NotImplementedException();
+            return recoveryTrades.Select(x => x.Id);
         }
 
         public bool RecoverTrade(Position position, string botLabel)
         {
-            var nextIndex = robot.LocalStorage.GetNextIndex();
-            robot.LocalStorage.StorePosition(nextIndex, position.Id);
+            //TEMP
+            position.ModifyTakeProfitPips(0);
+            recoveryTrades.Add(position);
+            //TEMP
 
+
+            var nextIndex = _.LocalStorage.GetNextIndex();
+            _.LocalStorage.StorePosition(nextIndex, position.Id);
+
+            //Push
+            _.LocalStorage.Flush(scope);
             return true;
         }
 
         public void Stop()
         {
+            _.Print("--------------------------------------------------- RECOVERY STATISTICS ----------------------------------------------------");
+            _.Print($"Number of recoveries  |  {recoveryTrades.Count}");
         }
 
         public double GetFitness(GetFitnessArgs args)

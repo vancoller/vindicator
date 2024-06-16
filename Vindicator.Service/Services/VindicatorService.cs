@@ -6,9 +6,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Vindicator.Service.Models;
+using Vindicator.Service.Reporting;
 using Vindicator.Service.Services.Receiver;
+using Vindicator.Service.Services.Trader;
 
-namespace Vindicator.Service.Services.Trader
+namespace Vindicator.Service.Services
 {
     public class VindicatorService : IVindicatorService
     {
@@ -18,6 +20,7 @@ namespace Vindicator.Service.Services.Trader
         private ServiceProvider serviceProvider;
         private VindicatorSettings config;
         private List<RecoveryTraderResults> results;
+        private int traderIndex = 0;
 
         public VindicatorService(Robot _robot, VindicatorSettings _config)
         {
@@ -47,7 +50,7 @@ namespace Vindicator.Service.Services.Trader
         private void ConfigureServices(IServiceCollection services)
         {
             services.AddSingleton<IVindicatorService>(this);
-            services.AddSingleton<Robot>(_);
+            services.AddSingleton(_);
             services.AddTransient<IRecoveryTrader, RecoveryTrader>();
             services.AddSingleton<IVindicatorReceiver, VindicatorReceiver>();
             services.AddSingleton(config);
@@ -106,9 +109,10 @@ namespace Vindicator.Service.Services.Trader
             if (!traders.ContainsKey((symbol, tradeType)))
             {
                 var trader = serviceProvider.GetRequiredService<IRecoveryTrader>();
-                trader.Configure(symbol, tradeType);
+                trader.Configure(symbol, tradeType, traderIndex);
 
                 traders.Add((symbol, tradeType), trader);
+                traderIndex++;
             }
 
             return traders[(symbol, tradeType)];
@@ -123,11 +127,33 @@ namespace Vindicator.Service.Services.Trader
         {
             try
             {
+                //STOP ALL TRADERS
+                var tradesToRemove = traders.Where(x => !x.Value.Positions.Any()).ToList();
+                foreach (var trader in traders)
+                {
+                    results.Add(trader.Value.GetResults());
+                    traders.Remove(trader.Key);
+                }
+
+                //REPORT
+                if (config.GenerateBacktestReport)
+                {
+                    var report = new BacktestReport(_, results, traders, config);
+                    report.GenerateReport();
+                }
+
+                var startDate = _.History.First().EntryTime;
+                var endDate = _.History.Last().ClosingTime; 
+
                 FindInactiveTraders();
 
                 _.Print("--------------------------------------------------- RECOVERY STATISTICS ----------------------------------------------------");
-                int numberOfRecoveries = results.Count;
-                _.Print($"Number of recoveries  |  {numberOfRecoveries}");
+                var numberOfRecoveries = results.Count;
+                var years = (endDate - startDate).TotalDays / 365;
+                var averageRecoveriesPerYear = numberOfRecoveries / years;
+                var averageRecoveriesPerMonth = averageRecoveriesPerYear / 12;
+
+                _.Print($"Number of recoveries  |  {numberOfRecoveries}  |  Per Year: {averageRecoveriesPerYear.ToString("0.0")}  |  Per Month: {averageRecoveriesPerMonth.ToString("0.0")} ");
 
                 var averageRecoveryDays = results.Select(x => x.TotalDays).Average();
                 var averageRecoveryHours = averageRecoveryDays * 24;

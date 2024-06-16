@@ -20,8 +20,7 @@ namespace Vindicator.Service.Services.Trader
         }
 
         public List<PendingTrade> PendingTrades { get; set; }
-        private Symbol Symbol { get; set; }
-        private string symbol;
+        public Symbol Symbol { get; set; }
         private TradeType tradeType;
         private RecoveryTraderResults results;
 
@@ -30,20 +29,21 @@ namespace Vindicator.Service.Services.Trader
 
         private ExponentialMovingAverage emaTrend;
 
+
         public RecoveryTrader(VindicatorSettings _config, Robot _robot)
         {
             config = _config;
             robot = _robot;
             Positions = new List<RecoveryPosition>();
             PendingTrades = new List<PendingTrade>();
-            emaTrend = robot.Indicators.ExponentialMovingAverage(robot.Bars.ClosePrices, 50);
+            emaTrend = robot.Indicators.ExponentialMovingAverage(robot.Bars.ClosePrices, config.TrendEMAPeriod);
         }
-        public void Configure(string _symbol, TradeType _tradeType)
+        
+        public void Configure(string _symbol, TradeType _tradeType, int index)
         {
-            symbol = _symbol;
             tradeType = _tradeType;
-            Symbol = robot.Symbols.GetSymbol(symbol);
-            results = new RecoveryTraderResults(symbol);
+            Symbol = robot.Symbols.GetSymbol(_symbol);
+            results = new RecoveryTraderResults(_symbol, _tradeType);
         }
 
         public void OnOneMinBarClosed()
@@ -52,9 +52,17 @@ namespace Vindicator.Service.Services.Trader
                 ProcessRecovery();
         }
 
-
         public RecoveryTraderResults GetResults()
         {
+            if (Positions.Any())
+            {
+                foreach(var position in Positions)
+                {
+                    robot.ClosePosition(position.Position);
+                }
+                results.EndDate = robot.Time;
+            }
+
             return results;
         }
 
@@ -168,15 +176,17 @@ namespace Vindicator.Service.Services.Trader
 
         private void ProcessRecovery()
         {
+            bool filterPassed = true;
+
             if (!Positions.Any() || PendingTrades.Any())
                 return;
 
             //Filters -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
-            if (emaTrend.Result.LastValue > Symbol.Bid && tradeType == TradeType.Buy)
-                return;
+            if (config.TrendEMAPeriod != 0 && emaTrend.Result.LastValue > Symbol.Bid && tradeType == TradeType.Buy)
+                filterPassed = false;
 
-            if (emaTrend.Result.LastValue < Symbol.Ask && tradeType == TradeType.Sell)
-                return;
+            if (config.TrendEMAPeriod != 0 && emaTrend.Result.LastValue < Symbol.Ask && tradeType == TradeType.Sell)
+                filterPassed = false;
 
             //--------------------------------------------
 
@@ -194,7 +204,10 @@ namespace Vindicator.Service.Services.Trader
                 pipsBetweenTrades = (lastPrice - currentPrice) / Symbol.PipSize;
             }
 
-            if (pipsBetweenTrades < -config.PipsBetweenTrades)
+            var isPipsBetweenTradesOK = pipsBetweenTrades < -config.PipsBetweenTrades;
+            var isPipsBetweenTradesDouble = pipsBetweenTrades < -config.PipsBetweenTrades * 2;
+
+            if ((filterPassed && pipsBetweenTrades < -config.PipsBetweenTrades) || isPipsBetweenTradesDouble)
             {
                 CreateNewRecoveryTrade();
             }
@@ -233,6 +246,7 @@ namespace Vindicator.Service.Services.Trader
                 {
                     tradeToRemove.Add(trade);
                     hasNewTrades = true;
+                    results.Volume += trade.Volume;
 
                     AddRecoveryPosition(result.Position, trade.Label);
                 }

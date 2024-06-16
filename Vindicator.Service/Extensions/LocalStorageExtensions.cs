@@ -28,16 +28,40 @@ namespace cAlgo.API
             localStorage.SetObject($"{key}", index, scope);
         }
 
+        public static int GetStoredPosition(this LocalStorage localStorage, int index)
+        {
+            var key = LocalStorageKeys.Position.ToString();
+            var positionId = localStorage.GetObject<int>($"{key}{index}", scope);
+            return positionId;
+        }
+
         public static void StorePosition(this LocalStorage localStorage, int index, int positionId)
         {
             var key = LocalStorageKeys.Position.ToString();
-            localStorage.SetObject($"{key}_{index}", positionId, scope);
+            localStorage.SetObject($"{key}{index}", positionId, scope);
         }
 
         public static void RemoveStoredPosition(this LocalStorage localStorage, int index)
         {
             var key = LocalStorageKeys.Position.ToString();
-            localStorage.Remove($"{key}_{index}", scope);
+            localStorage.Remove($"{key}{index}", scope);
         }
+
+        //public static int GetAndSetReportIndex(this LocalStorage localStorage)
+        //{
+        //    var key = LocalStorageKeys.BacktestReport.ToString();
+
+        //    //Get
+        //    localStorage.Reload(scope);
+        //    var index = localStorage.GetObject<int>(key, LocalStorageScope.Type);
+
+        //    //Set
+        //    index++;
+        //    localStorage.SetObject(key, index, scope);
+        //    localStorage.Flush(scope);
+
+        //    //Return
+        //    return index;
+        //}
     }
 }

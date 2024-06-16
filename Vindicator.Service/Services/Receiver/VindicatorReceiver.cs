@@ -2,7 +2,6 @@
 using System;
 using System.Linq;
 using Vindicator.Service.Enums;
-using Vindicator.Service.Services.Trader;
 
 namespace Vindicator.Service.Services.Receiver
 {
@@ -25,12 +24,15 @@ namespace Vindicator.Service.Services.Receiver
         private void Timer_TimerTick()
         {
             bool foundTrade = true;
+
+            //Load
+            robot.LocalStorage.Reload(scope);
             var index = robot.LocalStorage.GetLastStoredIndex();
 
             while (foundTrade)
             {
                 index++;
-                var positionId = robot.LocalStorage.GetObject<int>($"{LocalStorageKeys.Position.ToString()}_{index}", scope);
+                var positionId = robot.LocalStorage.GetStoredPosition(index);
                 if (positionId == 0)
                 {
                     foundTrade = false;

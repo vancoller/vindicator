@@ -14,7 +14,7 @@ namespace Vindicator.Service.Services.Trader
         bool AddPosition(Position position, string botLabel);
         void OnTick();
         void OnOneMinBarClosed();
-        void Configure(string symbol, TradeType tradeType);
+        void Configure(string symbol, TradeType tradeType, int index);
         RecoveryTraderResults GetResults();
     }
 }

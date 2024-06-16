@@ -9,6 +9,7 @@ namespace Vindicator.Service.Enums
     public enum LocalStorageKeys
     {
         LastStoredIndex,
-        Position
+        Position,
+        BacktestReport
     }
 }

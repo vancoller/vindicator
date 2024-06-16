@@ -2,7 +2,7 @@
 using cAlgo.API;
 using System.Collections.Generic;
 
-namespace Vindicator.Service.Services.Trader
+namespace Vindicator.Service.Services
 {
     public interface IVindicatorService
     {
