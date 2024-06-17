@@ -157,25 +157,23 @@ namespace cAlgo.Robots
                     vindicatorService.RecoverTrade(tradeResult.Position, TestBotLabel);
                 }
 
-                if (!recoveryPositions.Any(x => x.TradeType == TradeType.Sell))
-                {
-                    var tradeResult = ExecuteMarketOrder(TradeType.Sell, symbol, CalculateEntryVolume(), TestBotLabel, null, null);
-                    vindicatorService.RecoverTrade(tradeResult.Position, TestBotLabel);
-                }
+                //if (!recoveryPositions.Any(x => x.TradeType == TradeType.Sell))
+                //{
+                //    var tradeResult = ExecuteMarketOrder(TradeType.Sell, symbol, CalculateEntryVolume(), TestBotLabel, null, null);
+                //    vindicatorService.RecoverTrade(tradeResult.Position, TestBotLabel);
+                //}
 
                 //Random trade
-                if (bar == TestHour)
-                { 
-                    bar = 0;
+                //if (bar == TestHour)
+                //{ 
+                //    bar = 0;
 
-                    var a = ExecuteMarketOrder(TradeType.Buy, symbol, CalculateEntryVolume(), TestBotLabel, null, null);
-                    vindicatorService.RecoverTrade(a.Position, TestBotLabel);
+                //    var a = ExecuteMarketOrder(TradeType.Buy, symbol, CalculateEntryVolume(), TestBotLabel, null, null);
+                //    vindicatorService.RecoverTrade(a.Position, TestBotLabel);
 
-                    var b = ExecuteMarketOrder(TradeType.Sell, symbol, CalculateEntryVolume(), TestBotLabel, null, null);
-                    vindicatorService.RecoverTrade(b.Position, TestBotLabel);
-                }
-
-
+                //    var b = ExecuteMarketOrder(TradeType.Sell, symbol, CalculateEntryVolume(), TestBotLabel, null, null);
+                //    vindicatorService.RecoverTrade(b.Position, TestBotLabel);
+                //}
 
 
                 ////Close trades
@@ -247,7 +245,5 @@ namespace cAlgo.Robots
         {
             return vindicatorService.GetFitness(args);
         }
-
-
     }
 }

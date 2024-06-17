@@ -2,7 +2,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.8.34408.163
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Vindicator.Bot", "Vindicator.Bot\Vindicator.Bot.csproj", "{6FF421AA-9162-498A-9057-3B533990739F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Vindicator", "Vindicator\Vindicator.csproj", "{6FF421AA-9162-498A-9057-3B533990739F}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Vindicator.Service", "Vindicator.Service\Vindicator.Service.csproj", "{194B0C0C-16D9-4555-B9C0-B433C28CE018}"
 EndProject

@@ -10,7 +10,7 @@ namespace Vindicator.Service.Services.Trader
 {
     public interface IRecoveryTrader
     {
-        List<RecoveryPosition> Positions { get; }
+        RecoveryPositions Positions { get; }
         bool AddPosition(Position position, string botLabel);
         void OnTick();
         void OnOneMinBarClosed();
