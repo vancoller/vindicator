@@ -1,4 +1,5 @@
-﻿using cAlgo.API;
+﻿using Algolib.Shared;
+using cAlgo.API;
 using cAlgo.API.Indicators;
 using cAlgo.API.Internals;
 using System;
@@ -29,6 +30,7 @@ namespace Vindicator.Service.Services.Trader
         public readonly Robot robot;
 
         private ExponentialMovingAverage emaTrend;
+        private ExponentialMovingAverage emaTP;
         public RelativeStrengthIndex rsi;
 
 
@@ -39,6 +41,7 @@ namespace Vindicator.Service.Services.Trader
             Positions = new RecoveryPositions();
             PendingTrades = new List<PendingTrade>();
             emaTrend = robot.Indicators.ExponentialMovingAverage(robot.Bars.ClosePrices, config.TrendEMAPeriod);
+            emaTP = robot.Indicators.ExponentialMovingAverage(robot.Bars.ClosePrices, 500);
             rsi = robot.Indicators.RelativeStrengthIndex(robot.Bars.ClosePrices, 14);
         }
         
@@ -69,7 +72,7 @@ namespace Vindicator.Service.Services.Trader
             return results;
         }
 
-        public bool AddPosition(Position position, string botLabel)
+        public bool AddPositions(IEnumerable<Position> positions, string botLabel)
         {
             //First entry
             if (!Positions.Any())
@@ -77,8 +80,22 @@ namespace Vindicator.Service.Services.Trader
                 results.StartDate = robot.Time;
             }
 
-            AddRecoveryPosition(position, botLabel);
+            foreach (var position in positions)
+            {
+                AddRecoveryPosition(position, botLabel);
+            }
+            
+            //Only once per AddPositions
             CreateNewRecoveryTrade();
+
+            //if (Positions.Count >= 10)
+            //{
+            //    CloseAllPositions();
+            //}
+            //else
+            //{
+            //CreateNewRecoveryTrade();
+            //}
             return true;
         }
 
@@ -120,12 +137,30 @@ namespace Vindicator.Service.Services.Trader
 
         private void UpdateTakeProfit()
         {
-            var takeProfitPrice = CalculateBreakEvenPrice(tradeType);
+            //var takeProfitPrice = 0.0;
+            //var paddingPips = 5 * Symbol.PipSize;
+            //var distanceFromEMATP = Math.Abs(Symbol.Bid - emaTP.Result.LastValue) / Symbol.PipSize;
+            //var isEMATPAbovePrice = emaTP.Result.LastValue > Symbol.Bid;
 
+            //if (tradeType == TradeType.Buy && isEMATPAbovePrice)// && distanceFromEMATP > 200)
+            //{
+            //    takeProfitPrice = emaTP.Result.LastValue - paddingPips;
+            //}
+            //else if (tradeType == TradeType.Sell && !isEMATPAbovePrice)// && distanceFromEMATP > 200)
+            //{
+            //    takeProfitPrice = emaTP.Result.LastValue + paddingPips;
+            //}
+            //else
+            //{
+            //    takeProfitPrice = CalculateBreakEvenPrice(tradeType);
+            //}
+
+            var takeProfitPrice = CalculateBreakEvenPrice(tradeType);
             foreach (var position in Positions.OrderBy(x => x.Position.EntryPrice))
             {
                 robot.ModifyPosition(position.Position, null, takeProfitPrice);
             }
+
         }
 
         private double CalculateBreakEvenPrice(TradeType tradeType)
@@ -194,14 +229,23 @@ namespace Vindicator.Service.Services.Trader
                 var currentPrice = Symbol.Ask;
                 pipsBetweenTrades = (lastPrice - currentPrice) / Symbol.PipSize;
             }
+            var requiredPipsAway = GetRequiredPipsAway();
 
-            var isPipsBetweenTradesOK = pipsBetweenTrades < -config.PipsBetweenTrades;
-            var isPipsBetweenTradesDouble = pipsBetweenTrades < -config.PipsBetweenTrades * 2;
+            var isPipsBetweenTradesOK = pipsBetweenTrades < -requiredPipsAway;
+            //var isPipsBetweenTradesDouble = pipsBetweenTrades < -requiredPipsAway * 2;
 
-            if ((filterPassed && pipsBetweenTrades < -config.PipsBetweenTrades) || isPipsBetweenTradesDouble)
+            if ((filterPassed && isPipsBetweenTradesOK))// || isPipsBetweenTradesDouble)
             {
                 CreateNewRecoveryTrade();
             }
+        }
+
+        private double GetRequiredPipsAway()
+        {
+            var gridSizeInPips = (double)config.PipsBetweenTrades;
+            gridSizeInPips = this.AdjustGridSize_NumberOfTrades(gridSizeInPips);
+
+            return gridSizeInPips;
         }
 
         private void CreateNewRecoveryTrade()
@@ -274,7 +318,7 @@ namespace Vindicator.Service.Services.Trader
         {
             var volume = this.CalculateStandardVolume();
             volume = this.AdjustVolume_NumberOfTrades(volume);
-            volume = this.AdjustVolume_DaysInTrade(volume);
+            //volume = this.AdjustVolume_DaysInTrade(volume);
 
             return Symbol.NormalizeVolumeInUnits(volume);
         }

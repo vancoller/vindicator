@@ -11,7 +11,7 @@ namespace Vindicator.Service.Services.Trader
     public interface IRecoveryTrader
     {
         RecoveryPositions Positions { get; }
-        bool AddPosition(Position position, string botLabel);
+        bool AddPositions(IEnumerable<Position> position, string botLabel);
         void OnTick();
         void OnOneMinBarClosed();
         void Configure(string symbol, TradeType tradeType, int index);

@@ -11,5 +11,13 @@
         <PackageReference Include="MongoDB.Driver" Version="2.26.0" />
         <PackageReference Include="System.IO.Pipes" Version="4.3.0" />
     </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Enums\" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\..\Shared\Algolib\Algolib.Shared\Algolib.Shared.csproj" />
+    </ItemGroup>
     
 </Project>

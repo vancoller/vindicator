@@ -2,10 +2,9 @@ using cAlgo.API;
 using System.Linq;
 using System.Diagnostics;
 using Vindicator.Service.Models;
-using Vindicator.Service.Enums;
-using Vindicator.Service.Services.Trader;
 using System;
 using Vindicator.Service.Services;
+using Algolib.Shared;
 
 namespace cAlgo.Robots
 {
@@ -26,7 +25,7 @@ namespace cAlgo.Robots
         public int PipsBetweenTrades { get; set; }
 
         [Parameter("Recovery TP Money per 1k volume", DefaultValue = 1, Group = "Recovery")]
-        public int TakeProfitMoneyPer1kVolume { get; set; }
+        public double TakeProfitMoneyPer1kVolume { get; set; }
 
         [Parameter("Increase volume every x trade", DefaultValue = 10, Group = "Recovery")]
         public int IncreaseVolumeEveryXTrade { get; set; }
@@ -151,29 +150,35 @@ namespace cAlgo.Robots
                 var activePositions = Positions.Where(x => x.Symbol.Name == symbol && !recoveryPositionIds.Contains(x.Id));
                 var recoveryPositions = Positions.Where(x => x.Symbol.Name == symbol && recoveryPositionIds.Contains(x.Id));
 
+                //If any active position, start recover
+                if (activePositions.Any())
+                {
+                    vindicatorService.RecoverTrades(activePositions, TestBotLabel);
+                }
+
                 if (!recoveryPositions.Any(x => x.TradeType == TradeType.Buy))
                 {
                     var tradeResult = ExecuteMarketOrder(TradeType.Buy, symbol, CalculateEntryVolume(), TestBotLabel, null, null);
-                    vindicatorService.RecoverTrade(tradeResult.Position, TestBotLabel);
+                    vindicatorService.RecoverTrades(new Position[] { tradeResult.Position }, TestBotLabel);
                 }
 
-                //if (!recoveryPositions.Any(x => x.TradeType == TradeType.Sell))
-                //{
-                //    var tradeResult = ExecuteMarketOrder(TradeType.Sell, symbol, CalculateEntryVolume(), TestBotLabel, null, null);
-                //    vindicatorService.RecoverTrade(tradeResult.Position, TestBotLabel);
-                //}
+                if (!recoveryPositions.Any(x => x.TradeType == TradeType.Sell))
+                {
+                    var tradeResult = ExecuteMarketOrder(TradeType.Sell, symbol, CalculateEntryVolume(), TestBotLabel, null, null);
+                    vindicatorService.RecoverTrades(new Position[] { tradeResult.Position }, TestBotLabel);
+                }
 
                 //Random trade
-                //if (bar == TestHour)
-                //{ 
-                //    bar = 0;
+                if (bar == TestHour)
+                {
+                    bar = 0;
 
-                //    var a = ExecuteMarketOrder(TradeType.Buy, symbol, CalculateEntryVolume(), TestBotLabel, null, null);
-                //    vindicatorService.RecoverTrade(a.Position, TestBotLabel);
+                    var a = ExecuteMarketOrder(TradeType.Buy, symbol, CalculateEntryVolume(), TestBotLabel, null, null);
+                    //vindicatorService.RecoverTrade(a.Position, TestBotLabel);
 
-                //    var b = ExecuteMarketOrder(TradeType.Sell, symbol, CalculateEntryVolume(), TestBotLabel, null, null);
-                //    vindicatorService.RecoverTrade(b.Position, TestBotLabel);
-                //}
+                    var b = ExecuteMarketOrder(TradeType.Sell, symbol, CalculateEntryVolume(), TestBotLabel, null, null);
+                    //vindicatorService.RecoverTrade(b.Position, TestBotLabel);
+                }
 
 
                 ////Close trades

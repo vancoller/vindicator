@@ -8,6 +8,14 @@ namespace Vindicator.Service.Services.Trader.Extensions
 {
     public static class RecoveryExtension
     {
+        public static double AdjustGridSize_NumberOfTrades(this RecoveryTrader trader, double gridSize)
+        {
+            if (trader.config.IncreaseVolumeEveryXTrade == 0)
+                return gridSize;
+
+            return gridSize * Math.Max(1, (trader.PositionsOpenedHere.Count() / trader.config.IncreaseVolumeEveryXTrade + 1));
+        }
+
         public static double CalculateStandardVolume(this RecoveryTrader trader)
         {
             var config = trader.config;

@@ -98,10 +98,10 @@ namespace Vindicator.Service.Services
             return 1000 - averageRecoveryDays;
         }
 
-        public bool RecoverTrade(Position position, string botLabel)
+        public bool RecoverTrades(IEnumerable<Position> positions, string botLabel)
         {
-            var trader = GetTrader(position.Symbol.Name, position.TradeType);
-            return trader.AddPosition(position, botLabel);
+            var trader = GetTrader(positions.First().Symbol.Name, positions.First().TradeType);
+            return trader.AddPositions(positions, botLabel);
         }
 
         private IRecoveryTrader GetTrader(string symbol, TradeType tradeType)

@@ -1,8 +1,0 @@
-﻿namespace Vindicator.Service.Enums
-{
-    public enum SymbolShortCode
-    {
-        None,
-        USDCAD, GBPUSD, EURUSD, AUDUSD, NZDUSD, USDCHF, EURGBP, EURCHF, EURAUD, EURCAD, EURNZD, GBPCHF, GBPAUD, GBPCAD, GBPNZD, NZDCAD, NZDCHF, AUDCHF, AUDCAD, AUDNZD, USDJPY, EURJPY, GBPJPY, AUDJPY, CADJPY, CHFJPY, NZDJPY, 
-    }
-}

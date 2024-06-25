@@ -2,7 +2,7 @@
 using cAlgo.API;
 using System.Collections.Generic;
 using System.Linq;
-using Vindicator.Service.Enums;
+using Algolib.Shared;
 using Vindicator.Service.Models;
 
 namespace Vindicator.Service.Services.Sender
@@ -23,16 +23,19 @@ namespace Vindicator.Service.Services.Sender
             return recoveryTrades.Select(x => x.Id);
         }
 
-        public bool RecoverTrade(Position position, string botLabel)
+        public bool RecoverTrades(IEnumerable<Position> positions, string botLabel)
         {
             //TEMP
-            position.ModifyTakeProfitPips(0);
-            recoveryTrades.Add(position);
-            //TEMP
+            foreach (var position in positions)
+            {
+                position.ModifyTakeProfitPips(0);
+                recoveryTrades.Add(position);
+                //TEMP
 
 
-            var nextIndex = _.LocalStorage.GetNextIndex();
-            _.LocalStorage.StorePosition(nextIndex, position.Id);
+                var nextIndex = _.LocalStorage.GetNextIndex();
+                _.LocalStorage.StorePosition(nextIndex, position.Id);
+            }
 
             //Push
             _.LocalStorage.Flush(scope);

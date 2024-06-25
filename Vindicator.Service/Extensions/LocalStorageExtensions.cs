@@ -1,4 +1,4 @@
-﻿using Vindicator.Service.Enums;
+﻿using Algolib.Shared;
 
 namespace cAlgo.API
 {

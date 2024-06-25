@@ -36,7 +36,8 @@ namespace Vindicator.Service.Reporting
                 return;
 
             var symbol = firsResults.Symbol;
-            config.Symbol = robot.Symbol.Name;
+            config.Symbol = symbol;
+
             data.Balance = robot.Account.Balance;
             data.Equity = robot.Account.Equity;
             data.TimeFrame = robot.TimeFrame.ToString();

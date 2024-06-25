@@ -1,6 +1,6 @@
 ﻿using cAlgo.API;
 using System.Collections.Generic;
-using Vindicator.Service.Enums;
+using Algolib.Shared;
 using Vindicator.Service.Models;
 using Vindicator.Service.Services.Trader;
 

@@ -8,6 +8,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\Shared\Algolib\Algolib.Shared\Algolib.Shared.csproj" />
     <ProjectReference Include="..\Vindicator.Service\Vindicator.Service.csproj" />
   </ItemGroup>
 </Project>

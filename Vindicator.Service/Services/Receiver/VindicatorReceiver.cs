@@ -1,7 +1,7 @@
 ﻿using cAlgo.API;
 using System;
 using System.Linq;
-using Vindicator.Service.Enums;
+using Algolib.Shared;
 
 namespace Vindicator.Service.Services.Receiver
 {
@@ -40,16 +40,16 @@ namespace Vindicator.Service.Services.Receiver
                 }
 
                 //Trade found
-                foundTrade = true;
-                var position = robot.Positions.FirstOrDefault(x => x.Id == positionId);
-                if (position != null)
-                {
-                    if (vindicatorService.RecoverTrade(position, position.Label))
-                    {
-                        robot.LocalStorage.SetLastStoredIndex(index);
-                        robot.LocalStorage.RemoveStoredPosition(index);
-                    }
-                }
+                //foundTrade = true;
+                //var position = robot.Positions.FirstOrDefault(x => x.Id == positionId);
+                //if (position != null)
+                //{
+                //    if (vindicatorService.RecoverTrade(position, position.Label))
+                //    {
+                //        robot.LocalStorage.SetLastStoredIndex(index);
+                //        robot.LocalStorage.RemoveStoredPosition(index);
+                //    }
+                //}
             }
         }
 
