@@ -27,8 +27,11 @@ namespace cAlgo.Robots
         [Parameter("Recovery TP Money per 1k volume", DefaultValue = 1, Group = "Recovery")]
         public double TakeProfitMoneyPer1kVolume { get; set; }
 
-        [Parameter("Increase volume every x trade", DefaultValue = 10, Group = "Recovery")]
-        public int IncreaseVolumeEveryXTrade { get; set; }
+        [Parameter("Volume Setting", DefaultValue = RecoveryVolumeSetting.Standard, Group = "Recovery")]
+        public RecoveryVolumeSetting VolumeSetting { get; set; }
+
+        [Parameter("Increase every x trade", DefaultValue = 10, Group = "Recovery")]
+        public int IncreaseEveryXTrade { get; set; }
 
 
         [Parameter("Trend EMA Period", DefaultValue = 0, Group = "Recovery")]
@@ -117,7 +120,8 @@ namespace cAlgo.Robots
                 PerOneKEquity = PerOneKEquity,
                 MaxFirstVolume = MaxFirstVolume,
                 BotLabel = RecoveryBotLabel,
-                IncreaseVolumeEveryXTrade = IncreaseVolumeEveryXTrade,
+                IncreaseEveryXTrade = IncreaseEveryXTrade,
+                VolumeSetting = VolumeSetting,
                 TrendEMAPeriod = TrendEMAPeriod,
                 GenerateBacktestReport = GenerateBacktestReport,
                 Symbol = SymbolToTrade != SymbolShortCode.None ? SymbolToTrade.ToString() : String.Empty
@@ -144,8 +148,9 @@ namespace cAlgo.Robots
         private void TestOnBar()
         {
             bar++;
-            foreach (var symbol in allCurrencies.Split(','))
+            foreach (var s in allCurrencies.Split(','))
             {
+                var symbol = s.Trim();
                 var recoveryPositionIds = vindicatorService.GetPositionsInRecovery(symbol);
                 var activePositions = Positions.Where(x => x.Symbol.Name == symbol && !recoveryPositionIds.Contains(x.Id));
                 var recoveryPositions = Positions.Where(x => x.Symbol.Name == symbol && recoveryPositionIds.Contains(x.Id));
@@ -156,13 +161,13 @@ namespace cAlgo.Robots
                     vindicatorService.RecoverTrades(activePositions, TestBotLabel);
                 }
 
-                if (!recoveryPositions.Any(x => x.TradeType == TradeType.Buy))
+                if (!recoveryPositions.Any(x => x.TradeType == TradeType.Buy) && LongAllowed)
                 {
                     var tradeResult = ExecuteMarketOrder(TradeType.Buy, symbol, CalculateEntryVolume(), TestBotLabel, null, null);
                     vindicatorService.RecoverTrades(new Position[] { tradeResult.Position }, TestBotLabel);
                 }
 
-                if (!recoveryPositions.Any(x => x.TradeType == TradeType.Sell))
+                if (!recoveryPositions.Any(x => x.TradeType == TradeType.Sell) & ShortAllowed)
                 {
                     var tradeResult = ExecuteMarketOrder(TradeType.Sell, symbol, CalculateEntryVolume(), TestBotLabel, null, null);
                     vindicatorService.RecoverTrades(new Position[] { tradeResult.Position }, TestBotLabel);

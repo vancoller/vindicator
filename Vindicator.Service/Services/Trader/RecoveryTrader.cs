@@ -317,8 +317,18 @@ namespace Vindicator.Service.Services.Trader
         protected double CalculateRecoveryTradeVolume()
         {
             var volume = this.CalculateStandardVolume();
-            volume = this.AdjustVolume_NumberOfTrades(volume);
-            //volume = this.AdjustVolume_DaysInTrade(volume);
+
+            switch(config.VolumeSetting)
+            {
+                case RecoveryVolumeSetting.Standard:
+                    break;
+                case RecoveryVolumeSetting.Elastic:
+                    volume = this.AdjustVolume_Elastic(volume);
+                    break;
+                case RecoveryVolumeSetting.IncreasePerTrade:
+                    volume = this.AdjustVolume_NumberOfTrades(volume);
+                    break;
+            }
 
             return Symbol.NormalizeVolumeInUnits(volume);
         }

@@ -16,7 +16,7 @@ namespace Vindicator.Service.Models
 
         //Recovery Volume
         public RecoveryVolumeSetting VolumeSetting { get; set; }
-        public int IncreaseVolumeEveryXTrade { get; set; }
+        public int IncreaseEveryXTrade { get; set; }
 
         //Money Management
         public bool UseVolumePerOneK { get; set; }
