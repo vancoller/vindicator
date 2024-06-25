@@ -1,4 +1,5 @@
 ﻿using Algolib.Shared;
+using Algolib.Shared.Interfaces;
 using cAlgo.API;
 using cAlgo.API.Indicators;
 using cAlgo.API.Internals;
@@ -27,14 +28,14 @@ namespace Vindicator.Service.Services.Trader
         private RecoveryTraderResults results;
 
         public readonly VindicatorSettings config;
-        public readonly Robot robot;
+        public readonly IBaseRobot robot;
 
         private ExponentialMovingAverage emaTrend;
         private ExponentialMovingAverage emaTP;
         public RelativeStrengthIndex rsi;
 
 
-        public RecoveryTrader(VindicatorSettings _config, Robot _robot)
+        public RecoveryTrader(VindicatorSettings _config, IBaseRobot _robot)
         {
             config = _config;
             robot = _robot;
@@ -54,8 +55,8 @@ namespace Vindicator.Service.Services.Trader
 
         public void OnOneMinBarClosed()
         {
-            if (!PendingTrades.Any())
-                ProcessRecovery();
+            //if (!PendingTrades.Any())
+                //ProcessRecovery();
         }
 
         public RecoveryTraderResults GetResults()
@@ -84,8 +85,7 @@ namespace Vindicator.Service.Services.Trader
             {
                 AddRecoveryPosition(position, botLabel);
             }
-            
-            //Only once per AddPositions
+
             CreateNewRecoveryTrade();
 
             //if (Positions.Count >= 10)
@@ -113,6 +113,12 @@ namespace Vindicator.Service.Services.Trader
                 CheckPendingTrades();
             //else
             //ProcessRecovery();
+        }
+
+        public void OnBar()
+        {
+            if (!PendingTrades.Any())
+                ProcessRecovery();
         }
 
         private void CheckIfTradesAreClosed()
@@ -189,31 +195,52 @@ namespace Vindicator.Service.Services.Trader
                 return withoutFees - pipsRequiredToCoverFees * Symbol.PipSize;
         }
 
-        private void ProcessRecovery()
+        private bool CheckFilters()
         {
-            bool filterPassed = true;
-
-            if (!Positions.Any() || PendingTrades.Any())
-                return;
-
-            //Filters -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
             if (tradeType == TradeType.Buy)
             {
                 if (config.TrendEMAPeriod != 0 && emaTrend.Result.LastValue > Symbol.Bid)
-                    filterPassed = false;
+                    return false;
 
                 if (!this.IsRSILong())
-                    filterPassed = false;
+                    return false;
             }
 
             if (tradeType == TradeType.Sell)
             {
                 if (config.TrendEMAPeriod != 0 && emaTrend.Result.LastValue < Symbol.Ask)
-                    filterPassed = false;
+                    return false;
 
                 if (!this.IsRSIShort())
-                    filterPassed = false;
+                    return false;
             }
+
+            return true;
+        }
+        private void ProcessRecovery()
+        {
+            if (!Positions.Any() || PendingTrades.Any())
+                return;
+
+            //Filters -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+            var filterPassed = CheckFilters();
+            //if (tradeType == TradeType.Buy)
+            //{
+            //    if (config.TrendEMAPeriod != 0 && emaTrend.Result.LastValue > Symbol.Bid)
+            //        filterPassed = false;
+
+            //    if (!this.IsRSILong())
+            //        filterPassed = false;
+            //}
+
+            //if (tradeType == TradeType.Sell)
+            //{
+            //    if (config.TrendEMAPeriod != 0 && emaTrend.Result.LastValue < Symbol.Ask)
+            //        filterPassed = false;
+
+            //    if (!this.IsRSIShort())
+            //        filterPassed = false;
+            //}
             //--------------------------------------------
 
             double pipsBetweenTrades = 0;

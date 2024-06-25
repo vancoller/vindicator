@@ -1,4 +1,5 @@
-﻿using cAlgo.API;
+﻿using Algolib.Shared.Interfaces;
+using cAlgo.API;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using System;
@@ -12,7 +13,7 @@ namespace Vindicator.Service.Reporting
 {
     public class BacktestReport
     {
-        private Robot robot;
+        private IBaseRobot robot;
         private List<RecoveryTraderResults> results;
         private VindicatorSettings config;
         private ReportData data;
@@ -20,7 +21,7 @@ namespace Vindicator.Service.Reporting
 
 
 
-        public BacktestReport(Robot _robot, List<RecoveryTraderResults> _results, Dictionary<(string, TradeType), IRecoveryTrader> _traders, VindicatorSettings _config)
+        public BacktestReport(IBaseRobot _robot, List<RecoveryTraderResults> _results, Dictionary<(string, TradeType), IRecoveryTrader> _traders, VindicatorSettings _config)
         {
             robot = _robot;
             results = _results;

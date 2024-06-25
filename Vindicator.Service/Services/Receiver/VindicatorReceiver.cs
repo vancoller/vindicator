@@ -2,6 +2,7 @@
 using System;
 using System.Linq;
 using Algolib.Shared;
+using Algolib.Shared.Interfaces;
 
 namespace Vindicator.Service.Services.Receiver
 {
@@ -10,9 +11,9 @@ namespace Vindicator.Service.Services.Receiver
         private LocalStorageScope scope = LocalStorageScope.Device;
 
         private readonly IVindicatorService vindicatorService;
-        private readonly Robot robot;
+        private readonly IBaseRobot robot;
 
-        public VindicatorReceiver(IVindicatorService _vindicatorService, Robot _robot)
+        public VindicatorReceiver(IVindicatorService _vindicatorService, IBaseRobot _robot)
         {
             vindicatorService = _vindicatorService;
             robot = _robot;

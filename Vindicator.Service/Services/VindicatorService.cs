@@ -1,4 +1,5 @@
 ﻿
+using Algolib.Shared.Interfaces;
 using cAlgo.API;
 using cAlgo.API.Internals;
 using Microsoft.Extensions.DependencyInjection;
@@ -16,13 +17,14 @@ namespace Vindicator.Service.Services
     {
         private IVindicatorReceiver receiver;
         private Dictionary<(string, TradeType), IRecoveryTrader> traders;
-        private readonly Robot _;
+        private readonly IBaseRobot _;
         private ServiceProvider serviceProvider;
         private VindicatorSettings config;
         private List<RecoveryTraderResults> results;
         private int traderIndex = 0;
+        private double lastClose;
 
-        public VindicatorService(Robot _robot, VindicatorSettings _config)
+        public VindicatorService(IBaseRobot _robot, VindicatorSettings _config)
         {
             _ = _robot;
             traders = new Dictionary<(string, TradeType), IRecoveryTrader>();
@@ -54,7 +56,7 @@ namespace Vindicator.Service.Services
             services.AddTransient<IRecoveryTrader, RecoveryTrader>();
             services.AddSingleton<IVindicatorReceiver, VindicatorReceiver>();
             services.AddSingleton(config);
-            services.AddSingleton(_);
+            services.AddSingleton<IBaseRobot>(_);
         }
 
         private void OnOneMinBarClosed(BarClosedEventArgs args)
@@ -73,6 +75,19 @@ namespace Vindicator.Service.Services
             foreach (var trader in traders)
             {
                 trader.Value.OnTick();
+            }
+
+            //Onbar
+            var lastBarPrice = _.Bars.ClosePrices.Last(1);
+            if (lastBarPrice != lastClose)
+            {
+                //Bar changed
+                lastClose = lastBarPrice;
+
+                foreach (var trader in traders)
+                {
+                    trader.Value.OnBar();
+                }
             }
         }
 
