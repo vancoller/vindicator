@@ -52,5 +52,16 @@ namespace Vindicator.Service.Services.Sender
         {
             return 0;
         }
+
+        public bool AddTradesToRecovery(IEnumerable<Position> positions, string botLabel)
+        {
+            //TEMP
+            foreach (var position in positions)
+            {
+                recoveryTrades.Add(position);
+            }
+
+            return true;
+        }
     }
 }

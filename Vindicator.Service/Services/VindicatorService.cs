@@ -116,7 +116,13 @@ namespace Vindicator.Service.Services
         public bool RecoverTrades(IEnumerable<Position> positions, string botLabel)
         {
             var trader = GetTrader(positions.First().Symbol.Name, positions.First().TradeType);
-            return trader.AddPositions(positions, botLabel);
+            return trader.AddPositions(positions, botLabel, true);
+        }
+
+        public bool AddTradesToRecovery(IEnumerable<Position> positions, string botLabel)
+        {
+            var trader = GetTrader(positions.First().Symbol.Name, positions.First().TradeType);
+            return trader.AddPositions(positions, botLabel, false);
         }
 
         private IRecoveryTrader GetTrader(string symbol, TradeType tradeType)
@@ -229,5 +235,6 @@ namespace Vindicator.Service.Services
                 _.Print("Error was thrown writing log file");
             }
         }
+
     }
 }
