@@ -57,12 +57,13 @@ namespace Vindicator.Service.Services.Trader
 
         public RecoveryTraderResults GetResults()
         {
-            if (Positions.Any())
+            if (Positions.Any() && robot.BacktestCloseTradesOnEnd)
             {
                 foreach (var position in Positions)
                 {
                     robot.ClosePosition(position.Position);
                 }
+
                 results.EndDate = robot.Time;
             }
 

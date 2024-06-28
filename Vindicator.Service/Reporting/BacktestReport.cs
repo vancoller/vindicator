@@ -47,7 +47,6 @@ namespace Vindicator.Service.Reporting
             data.Recoveries = results.ToArray();
             data.Config = config;
 
-
             SaveReportToMongoDB();
         }
 
