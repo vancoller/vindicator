@@ -5,11 +5,12 @@ using Vindicator.Service.Models;
 using System;
 using Vindicator.Service.Services;
 using Algolib.Shared;
+using Algolib.Shared.Interfaces;
 
 namespace cAlgo.Robots
 {
     [Robot(TimeZone = TimeZones.UTC, AccessRights = AccessRights.FullAccess)]
-    public class Vindicator : Robot
+    public class Vindicator : Robot, IBaseRobot
     {
         #region Parameters
 
@@ -86,6 +87,7 @@ namespace cAlgo.Robots
 
         [Parameter("Debug", Group = "Debug", DefaultValue = false)]
         public bool IsDebug { get; set; }
+        public bool BacktestCloseTradesOnEnd { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
         #endregion
 

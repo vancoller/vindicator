@@ -4,6 +4,7 @@ namespace Vindicator.Service.Models
 {
     public class VindicatorSettings
     {
+        public double TakeProfitPips { get; set; }
         public double TakeProfitMoney { get; set; }
         public int PipsBetweenTrades { get; set; }
         public bool GenerateBacktestReport { get; set; }

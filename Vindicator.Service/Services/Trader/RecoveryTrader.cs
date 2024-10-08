@@ -111,14 +111,24 @@ namespace Vindicator.Service.Services.Trader
 
             if (!PendingTrades.Any())
                 ProcessRecovery();
+
+            //CheckMaxDrawdown();
         }
+
+        //private void CheckMaxDrawdown()
+        //{
+        //    if (results.MaxDrawdownPercentage >= 10)
+        //    {
+        //        CloseAllPositions();
+        //    }
+        //}
 
         private void CheckIfTradesAreClosed()
         {
             var tradesToRemove = new List<RecoveryPosition>();
             foreach (var position in Positions)
             {
-                if (robot.Positions.FirstOrDefault(x => x.Id == position.Position.Id) == null)
+                if (robot.GetCTraderPositionsClass().FirstOrDefault(x => x.Id == position.Position.Id) == null)
                 {
                     tradesToRemove.Add(position);
                 }
@@ -147,6 +157,7 @@ namespace Vindicator.Service.Services.Trader
             var totalVolume = 0.0;
             var totalVolumePrice = 0.0;
             var fees = 0.0;
+            double result = 0;
 
             foreach (var position in Positions)
             {
@@ -156,16 +167,20 @@ namespace Vindicator.Service.Services.Trader
             }
 
             //Add $$ to make profit
-            fees += config.TakeProfitMoney * (totalVolume / 1000);
+            //fees += config.TakeProfitMoney * (totalVolume / 1000);
 
             var withoutFees = totalVolumePrice / totalVolume;
             var valuePerPip = Symbol.PipValue * totalVolume;
             var pipsRequiredToCoverFees = fees / valuePerPip;
 
+            var addedPips = (config.TakeProfitPips) * Symbol.PipSize;
+
             if (tradeType == TradeType.Buy)
-                return withoutFees + pipsRequiredToCoverFees * Symbol.PipSize;
+                result = withoutFees + (pipsRequiredToCoverFees * Symbol.PipSize) + addedPips;
             else
-                return withoutFees - pipsRequiredToCoverFees * Symbol.PipSize;
+                result = withoutFees - (pipsRequiredToCoverFees * Symbol.PipSize) - addedPips;
+
+            return result;
         }
 
         private bool CheckFilters()
