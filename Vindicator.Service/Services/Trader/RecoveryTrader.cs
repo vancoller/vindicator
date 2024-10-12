@@ -1,4 +1,5 @@
-﻿using Algolib.Shared;
+﻿using Algolib.Enums;
+using Algolib.Shared;
 using Algolib.Shared.Interfaces;
 using cAlgo.API;
 using cAlgo.API.Indicators;
@@ -260,7 +261,7 @@ namespace Vindicator.Service.Services.Trader
         private void CreateNewRecoveryTrade()
         {
             var volume = CalculateRecoveryTradeVolume();
-            AddPendingTrade(new PendingTrade(Symbol.Name, volume, tradeType, config.BotLabel, null, null, null, null, "calculated_recovery"));
+            AddPendingTrade(new PendingTrade(Symbol.Name, volume, tradeType, Algolib.Shared.Enums.OrderType.Market, null, config.BotLabel, null, null, null, null, Constants.TradeRecovery));
         }
 
         private void AddPendingTrade(PendingTrade trade)
