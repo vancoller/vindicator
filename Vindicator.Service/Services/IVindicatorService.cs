@@ -28,6 +28,10 @@ namespace Vindicator.Service.Services
 
         void Stop();
         double GetFitness(GetFitnessArgs args);
+
+        void UpdatePipsBetweenTrades(int pipsBetweenTrades);
+
+        int GetNumberOfRecoveries(string symbolName);
         //IEnumerable<Position> GetPositions();
     }
 }

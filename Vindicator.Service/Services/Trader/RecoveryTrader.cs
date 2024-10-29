@@ -186,6 +186,9 @@ namespace Vindicator.Service.Services.Trader
 
         private bool CheckFilters()
         {
+            if (!config.UseFilters)
+                return true;
+
             if (tradeType == TradeType.Buy)
             {
                 if (!this.IsRSILong())
@@ -239,8 +242,8 @@ namespace Vindicator.Service.Services.Trader
                 var currentPrice = Symbol.Ask;
                 pipsBetweenTrades = (lastPrice - currentPrice) / Symbol.PipSize;
             }
-            var requiredPipsAway = GetRequiredPipsAway();
 
+            var requiredPipsAway = GetRequiredPipsAway();
             var isPipsBetweenTradesOK = pipsBetweenTrades < -requiredPipsAway;
             //var isPipsBetweenTradesDouble = pipsBetweenTrades < -requiredPipsAway * 2;
 
@@ -261,7 +264,9 @@ namespace Vindicator.Service.Services.Trader
         private void CreateNewRecoveryTrade()
         {
             var volume = CalculateRecoveryTradeVolume();
-            AddPendingTrade(new PendingTrade(Symbol.Name, volume, tradeType, Algolib.Shared.Enums.OrderType.Market, null, config.BotLabel, null, null, null, null, Constants.TradeRecovery));
+            var firstTradeComment = Positions.First().Position.Comment;
+            var firstTradePositionId = Positions.First().Position.Id;
+            AddPendingTrade(new PendingTrade(Symbol.Name, volume, tradeType, Algolib.Shared.Enums.OrderType.Market, null, config.BotLabel, null, null, null, null, $"{Constants.TradeRecovery} for {firstTradeComment} ({firstTradePositionId})"));
         }
 
         private void AddPendingTrade(PendingTrade trade)
@@ -374,6 +379,11 @@ namespace Vindicator.Service.Services.Trader
             var daysInTrade = currentDate.Subtract(startDate).TotalDays;
 
             return daysInTrade;
+        }
+
+        public void UpdatePipsBetweenTrades(int pipsBetweenTrades)
+        {
+            config.PipsBetweenTrades = pipsBetweenTrades;
         }
     }
 }

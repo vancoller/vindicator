@@ -144,6 +144,14 @@ namespace Vindicator.Service.Services
             return traders.SelectMany(x => x.Value.Positions).Where(x => x.Position.Symbol.Name == symbol).Select(x => x.Position.Id);
         }
 
+        public void UpdatePipsBetweenTrades(int pipsBetweenTrades)
+        {
+            foreach (var trader in traders)
+            {
+                trader.Value.UpdatePipsBetweenTrades(pipsBetweenTrades);
+            }
+        }
+
         public void Stop()
         {
             try
@@ -236,5 +244,9 @@ namespace Vindicator.Service.Services
             }
         }
 
+        public int GetNumberOfRecoveries(string symbolName)
+        {
+            return results.Where(x => x.Symbol == symbolName).Count();
+        }
     }
 }

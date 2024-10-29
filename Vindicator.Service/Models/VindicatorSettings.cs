@@ -22,5 +22,6 @@ namespace Vindicator.Service.Models
         public double PerOneKVolume { get; set; }
         public double PerOneKEquity { get; set; }
         public double MaxFirstVolume { get; set; }
+        public bool UseFilters { get; set; }
     }
 }

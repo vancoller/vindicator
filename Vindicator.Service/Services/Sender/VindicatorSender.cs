@@ -63,5 +63,14 @@ namespace Vindicator.Service.Services.Sender
 
             return true;
         }
+
+        public void UpdatePipsBetweenTrades(int pipsBetweenTrades)
+        {
+        }
+
+        public int GetNumberOfRecoveries(string symbolName)
+        {
+            return 0;
+        }
     }
 }
