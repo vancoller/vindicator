@@ -72,5 +72,9 @@ namespace Vindicator.Service.Services.Sender
         {
             return 0;
         }
+
+        public void OnPositionClosed(PositionClosedEventArgs args)
+        {
+        }
     }
 }

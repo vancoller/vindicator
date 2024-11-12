@@ -32,6 +32,7 @@ namespace Vindicator.Service.Services
         void UpdatePipsBetweenTrades(int pipsBetweenTrades);
 
         int GetNumberOfRecoveries(string symbolName);
-        //IEnumerable<Position> GetPositions();
+
+        void OnPositionClosed(PositionClosedEventArgs args);
     }
 }

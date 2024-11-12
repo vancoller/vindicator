@@ -18,5 +18,6 @@ namespace Vindicator.Service.Services.Trader
         void Configure(string symbol, TradeType tradeType, int index);
         RecoveryTraderResults GetResults();
         void UpdatePipsBetweenTrades(int pipsBetweenTrades);
+        void OnPositionClosed(PositionClosedEventArgs args);
     }
 }

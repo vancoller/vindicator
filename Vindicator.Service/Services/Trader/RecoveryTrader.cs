@@ -385,5 +385,11 @@ namespace Vindicator.Service.Services.Trader
         {
             config.PipsBetweenTrades = pipsBetweenTrades;
         }
+
+        public void OnPositionClosed(PositionClosedEventArgs args)
+        {
+            if (!robot.IsBackTesting)
+                UpdateTakeProfit();
+        }
     }
 }

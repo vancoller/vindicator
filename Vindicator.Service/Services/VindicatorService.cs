@@ -172,7 +172,7 @@ namespace Vindicator.Service.Services
                 }
 
                 var startDate = _.History.First().EntryTime;
-                var endDate = _.History.Last().ClosingTime; 
+                var endDate = _.History.Last().ClosingTime;
 
                 FindInactiveTraders();
 
@@ -247,6 +247,14 @@ namespace Vindicator.Service.Services
         public int GetNumberOfRecoveries(string symbolName)
         {
             return results.Where(x => x.Symbol == symbolName).Count();
+        }
+
+        public void OnPositionClosed(PositionClosedEventArgs args)
+        {
+            foreach (var trader in traders)
+            {
+                trader.Value.OnPositionClosed(args);
+            }
         }
     }
 }
