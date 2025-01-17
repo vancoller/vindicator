@@ -27,11 +27,10 @@ namespace Vindicator.Service.Services.Trader
         public Symbol Symbol { get; set; }
         private TradeType tradeType;
         private RecoveryTraderResults results;
+        private double nextVolume;
 
         public readonly VindicatorSettings config;
         public readonly IBaseRobot robot;
-
-        public RelativeStrengthIndex rsi;
 
 
         public RecoveryTrader(VindicatorSettings _config, IBaseRobot _robot)
@@ -40,7 +39,6 @@ namespace Vindicator.Service.Services.Trader
             robot = _robot;
             Positions = new RecoveryPositions();
             PendingTrades = new List<PendingTrade>();
-            rsi = robot.Indicators.RelativeStrengthIndex(robot.Bars.ClosePrices, 14);
         }
         
         public void Configure(string _symbol, TradeType _tradeType, int index)
@@ -107,6 +105,8 @@ namespace Vindicator.Service.Services.Trader
 
         public void OnBar()
         {
+            nextVolume = CalculateRecoveryTradeVolume();
+
             UpdateStats();
             CheckIfTradesAreClosed();
 
@@ -184,51 +184,17 @@ namespace Vindicator.Service.Services.Trader
             return result;
         }
 
-        private bool CheckFilters()
+        private bool CheckFilters(bool isPipsBetweenTradesOK)
         {
-            if (!config.UseFilters)
-                return true;
-
-            if (tradeType == TradeType.Buy)
-            {
-                if (!this.IsRSILong())
-                    return false;
-            }
-
-            if (tradeType == TradeType.Sell)
-            {
-                if (!this.IsRSIShort())
-                    return false;
-            }
-
-            return true;
+            return config.RecoveryFilterDelegate(tradeType, isPipsBetweenTradesOK, nextVolume);
         }
+
         private void ProcessRecovery()
         {
             if (!Positions.Any() || PendingTrades.Any())
                 return;
 
-            //Filters -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
-            var filterPassed = CheckFilters();
-            //if (tradeType == TradeType.Buy)
-            //{
-            //    if (config.TrendEMAPeriod != 0 && emaTrend.Result.LastValue > Symbol.Bid)
-            //        filterPassed = false;
-
-            //    if (!this.IsRSILong())
-            //        filterPassed = false;
-            //}
-
-            //if (tradeType == TradeType.Sell)
-            //{
-            //    if (config.TrendEMAPeriod != 0 && emaTrend.Result.LastValue < Symbol.Ask)
-            //        filterPassed = false;
-
-            //    if (!this.IsRSIShort())
-            //        filterPassed = false;
-            //}
-            //--------------------------------------------
-
+            //Distance check
             double pipsBetweenTrades = 0;
             if (tradeType == TradeType.Buy)
             {
@@ -247,6 +213,9 @@ namespace Vindicator.Service.Services.Trader
             var isPipsBetweenTradesOK = pipsBetweenTrades < -requiredPipsAway;
             //var isPipsBetweenTradesDouble = pipsBetweenTrades < -requiredPipsAway * 2;
 
+            //Filters -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+            var filterPassed = CheckFilters(isPipsBetweenTradesOK);
+
             if ((filterPassed && isPipsBetweenTradesOK))// || isPipsBetweenTradesDouble)
             {
                 CreateNewRecoveryTrade();
@@ -263,7 +232,7 @@ namespace Vindicator.Service.Services.Trader
 
         private void CreateNewRecoveryTrade()
         {
-            var volume = CalculateRecoveryTradeVolume();
+            var volume = nextVolume > 0 ? nextVolume : CalculateRecoveryTradeVolume();
             var firstTradeComment = Positions.First().Position.Comment;
             var firstTradePositionId = Positions.First().Position.Id;
             AddPendingTrade(new PendingTrade(Symbol.Name, volume, tradeType, Algolib.Shared.Enums.OrderType.Market, null, config.BotLabel, null, null, null, null, $"{Constants.TradeRecovery} for {firstTradeComment} ({firstTradePositionId})"));
@@ -390,6 +359,11 @@ namespace Vindicator.Service.Services.Trader
         {
             if (!robot.IsBackTesting)
                 UpdateTakeProfit();
+        }
+
+        public void SetRecoveryCheckFunction(IVindicatorService.RecoveryFilterDelegate checkFunction)
+        {
+            config.RecoveryFilterDelegate = checkFunction;
         }
     }
 }

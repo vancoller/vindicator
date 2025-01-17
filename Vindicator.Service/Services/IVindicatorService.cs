@@ -6,6 +6,8 @@ namespace Vindicator.Service.Services
 {
     public interface IVindicatorService
     {
+        public delegate bool RecoveryFilterDelegate(TradeType tradeType, bool isPipsBetweenTradesOK, double nextVolume);
+
         IEnumerable<int> GetPositionsInRecovery(string symbol);
 
 
@@ -15,7 +17,7 @@ namespace Vindicator.Service.Services
         /// <param name="positions"></param>
         /// <param name="botLabel"></param>
         /// <returns></returns>
-        bool RecoverTrades(IEnumerable<Position> positions, string botLabel);
+        bool RecoverTrades(IEnumerable<Position> positions, string botLabel, bool immediatelyAddRecoveryTrade = true);
 
 
         /// <summary>
@@ -34,5 +36,8 @@ namespace Vindicator.Service.Services
         int GetNumberOfRecoveries(string symbolName);
 
         void OnPositionClosed(PositionClosedEventArgs args);
+
+        void SetRecoveryCheckFunction(RecoveryFilterDelegate checkFunction);
+
     }
 }

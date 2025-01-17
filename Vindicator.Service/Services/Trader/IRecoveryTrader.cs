@@ -1,9 +1,5 @@
 ﻿using cAlgo.API;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Vindicator.Service.Models;
 
 namespace Vindicator.Service.Services.Trader
@@ -19,5 +15,6 @@ namespace Vindicator.Service.Services.Trader
         RecoveryTraderResults GetResults();
         void UpdatePipsBetweenTrades(int pipsBetweenTrades);
         void OnPositionClosed(PositionClosedEventArgs args);
+        void SetRecoveryCheckFunction(IVindicatorService.RecoveryFilterDelegate checkFunction);
     }
 }

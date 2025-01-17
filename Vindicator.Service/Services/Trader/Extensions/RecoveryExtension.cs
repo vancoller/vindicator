@@ -1,8 +1,5 @@
-﻿using cAlgo.API;
-using System;
+﻿using System;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Security.Cryptography;
 
 namespace Vindicator.Service.Services.Trader.Extensions
 {
@@ -37,7 +34,6 @@ namespace Vindicator.Service.Services.Trader.Extensions
             return gridSize * Math.Max(1, (trader.PositionsOpenedHere.Count() / trader.config.IncreaseEveryXTrade + 1));
         }
 
-
         public static double AdjustVolume_NumberOfTrades(this RecoveryTrader trader, double volume)
         {
             if (trader.config.IncreaseEveryXTrade == 0)
@@ -66,24 +62,6 @@ namespace Vindicator.Service.Services.Trader.Extensions
             var daysInTrade = trader.GetDaysInBasket();
             var mutliplier = Math.Max(1, daysInTrade / 60);
             return volume * mutliplier;
-        }
-
-        public static bool IsRSILong(this RecoveryTrader trader)
-        {
-            var Bars = trader.robot.Bars;
-            var prevBarIsOS = trader.rsi.Result[Bars.Count - 2] <= 35;
-            var barBeforePrevIsOs = trader.rsi.Result[Bars.Count - 3] <= 35;
-
-            return !prevBarIsOS && barBeforePrevIsOs;// && IsTrendUp();
-        }
-
-        public static bool IsRSIShort(this RecoveryTrader trader)
-        {
-            var Bars = trader.robot.Bars;
-            var prevBarIsOB = trader.rsi.Result[Bars.Count - 2] >= 65;
-            var barBeforePrevIsOB = trader.rsi.Result[Bars.Count - 3] >= 65;
-
-            return !prevBarIsOB && barBeforePrevIsOB;// && !IsTrendUp();
         }
     }
 }

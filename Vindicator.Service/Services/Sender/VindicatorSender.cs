@@ -23,15 +23,13 @@ namespace Vindicator.Service.Services.Sender
             return recoveryTrades.Select(x => x.Id);
         }
 
-        public bool RecoverTrades(IEnumerable<Position> positions, string botLabel)
+        public bool RecoverTrades(IEnumerable<Position> positions, string botLabel, bool immediatelyAddRecoveryTrade = true)
         {
             //TEMP
             foreach (var position in positions)
             {
                 position.ModifyTakeProfitPips(0);
                 recoveryTrades.Add(position);
-                //TEMP
-
 
                 var nextIndex = _.LocalStorage.GetNextIndex();
                 _.LocalStorage.StorePosition(nextIndex, position.Id);
@@ -74,6 +72,10 @@ namespace Vindicator.Service.Services.Sender
         }
 
         public void OnPositionClosed(PositionClosedEventArgs args)
+        {
+        }
+
+        public void SetRecoveryCheckFunction(IVindicatorService.RecoveryFilterDelegate checkFunction)
         {
         }
     }

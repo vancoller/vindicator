@@ -1,7 +1,6 @@
 ﻿
 using Algolib.Shared.Interfaces;
 using cAlgo.API;
-using cAlgo.API.Internals;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
@@ -10,6 +9,7 @@ using Vindicator.Service.Models;
 using Vindicator.Service.Reporting;
 using Vindicator.Service.Services.Receiver;
 using Vindicator.Service.Services.Trader;
+using static Vindicator.Service.Services.IVindicatorService;
 
 namespace Vindicator.Service.Services
 {
@@ -113,10 +113,10 @@ namespace Vindicator.Service.Services
             return 1000 - averageRecoveryDays;
         }
 
-        public bool RecoverTrades(IEnumerable<Position> positions, string botLabel)
+        public bool RecoverTrades(IEnumerable<Position> positions, string botLabel, bool immediatelyAddRecoveryTrade = true)
         {
             var trader = GetTrader(positions.First().Symbol.Name, positions.First().TradeType);
-            return trader.AddPositions(positions, botLabel, true);
+            return trader.AddPositions(positions, botLabel, immediatelyAddRecoveryTrade);
         }
 
         public bool AddTradesToRecovery(IEnumerable<Position> positions, string botLabel)
@@ -254,6 +254,14 @@ namespace Vindicator.Service.Services
             foreach (var trader in traders)
             {
                 trader.Value.OnPositionClosed(args);
+            }
+        }
+
+        public void SetRecoveryCheckFunction(RecoveryFilterDelegate checkFunction)
+        {
+            foreach(var trader in traders)
+            {
+                trader.Value.SetRecoveryCheckFunction(checkFunction);
             }
         }
     }

@@ -1,4 +1,5 @@
 ﻿using Algolib.Shared;
+using static Vindicator.Service.Services.IVindicatorService;
 
 namespace Vindicator.Service.Models
 {
@@ -22,6 +23,8 @@ namespace Vindicator.Service.Models
         public double PerOneKVolume { get; set; }
         public double PerOneKEquity { get; set; }
         public double MaxFirstVolume { get; set; }
-        public bool UseFilters { get; set; }
+
+        //RecoveryFilterDelegate
+        public RecoveryFilterDelegate RecoveryFilterDelegate { get; set; }
     }
 }
