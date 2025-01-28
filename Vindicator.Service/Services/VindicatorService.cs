@@ -17,14 +17,14 @@ namespace Vindicator.Service.Services
     {
         private IVindicatorReceiver receiver;
         private Dictionary<(string, TradeType), IRecoveryTrader> traders;
-        private readonly IBaseRobot _;
+        private readonly ChartData _;
         private ServiceProvider serviceProvider;
         private VindicatorSettings config;
         private List<RecoveryTraderResults> results;
         private int traderIndex = 0;
         private double lastClose;
 
-        public VindicatorService(IBaseRobot _robot, VindicatorSettings _config)
+        public VindicatorService(ChartData _robot, VindicatorSettings _config)
         {
             _ = _robot;
             traders = new Dictionary<(string, TradeType), IRecoveryTrader>();
@@ -56,7 +56,7 @@ namespace Vindicator.Service.Services
             services.AddTransient<IRecoveryTrader, RecoveryTrader>();
             services.AddSingleton<IVindicatorReceiver, VindicatorReceiver>();
             services.AddSingleton(config);
-            services.AddSingleton<IBaseRobot>(_);
+            services.AddSingleton<ChartData>(_);
         }
 
         private void OnOneMinBarClosed(BarClosedEventArgs args)

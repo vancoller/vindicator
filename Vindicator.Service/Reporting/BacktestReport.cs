@@ -13,7 +13,7 @@ namespace Vindicator.Service.Reporting
 {
     public class BacktestReport
     {
-        private IBaseRobot robot;
+        private ChartData robot;
         private List<RecoveryTraderResults> results;
         private VindicatorSettings config;
         private ReportData data;
@@ -21,7 +21,7 @@ namespace Vindicator.Service.Reporting
 
 
 
-        public BacktestReport(IBaseRobot _robot, List<RecoveryTraderResults> _results, Dictionary<(string, TradeType), IRecoveryTrader> _traders, VindicatorSettings _config)
+        public BacktestReport(ChartData _robot, List<RecoveryTraderResults> _results, Dictionary<(string, TradeType), IRecoveryTrader> _traders, VindicatorSettings _config)
         {
             robot = _robot;
             results = _results;

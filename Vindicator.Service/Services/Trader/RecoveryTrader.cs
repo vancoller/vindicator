@@ -1,9 +1,7 @@
 ﻿using Algolib.Enums;
 using Algolib.Shared;
+using Algolib.Shared.Enums;
 using Algolib.Shared.Interfaces;
-using cAlgo.API;
-using cAlgo.API.Indicators;
-using cAlgo.API.Internals;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -30,10 +28,10 @@ namespace Vindicator.Service.Services.Trader
         private double nextVolume;
 
         public readonly VindicatorSettings config;
-        public readonly IBaseRobot robot;
+        public readonly ChartData robot;
 
 
-        public RecoveryTrader(VindicatorSettings _config, IBaseRobot _robot)
+        public RecoveryTrader(VindicatorSettings _config, ChartData _robot)
         {
             config = _config;
             robot = _robot;

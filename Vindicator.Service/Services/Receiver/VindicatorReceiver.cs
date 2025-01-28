@@ -11,9 +11,9 @@ namespace Vindicator.Service.Services.Receiver
         private LocalStorageScope scope = LocalStorageScope.Device;
 
         private readonly IVindicatorService vindicatorService;
-        private readonly IBaseRobot robot;
+        private readonly ChartData robot;
 
-        public VindicatorReceiver(IVindicatorService _vindicatorService, IBaseRobot _robot)
+        public VindicatorReceiver(IVindicatorService _vindicatorService, ChartData _robot)
         {
             vindicatorService = _vindicatorService;
             robot = _robot;
